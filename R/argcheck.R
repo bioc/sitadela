@@ -120,5 +120,5 @@
 }
 
 .getValidArgs <- function() {
-    return(c("organisms","sources","db","forceDownload","rc"))
+    return(c("organisms","sources","db","versioned","forceDownload","rc"))
 }

@@ -1,3 +1,43 @@
+.getAttributes <- function(org,type,ver=NULL,tv=FALSE) {
+    if (is.null(ver)) {
+        u2e <- .ucscToEnsembl()
+        vers <- u2e[[org]]
+        ver <- vers[length(vers)]
+    }
+    switch(type,
+        gene = {
+            if (tv)
+                return(.getVersionedGeneAttributes(org,ver))
+            else
+                return(.getGeneAttributes(org))
+        },
+        transcript = {
+            if (tv)
+                return(.getVersionedTranscriptAttributes(org,ver))
+            else
+                return(.getTranscriptAttributes(org))
+        },
+        exon = {
+            if (tv)
+                return(.getVersionedExonAttributes(org,ver))
+            else
+                return(.getExonAttributes(org))
+        },
+        utr = {
+            if (tv)
+                return(.getVersionedTranscriptUtrAttributes(org,ver))
+            else
+                return(.getTranscriptUtrAttributes(org))
+        },
+        transexon = {
+            if (tv)
+                return(.getVersionedTranscriptExonAttributes(org,ver))
+            else
+                return(.getTranscriptExonAttributes(org))
+        }
+    )
+}
+
 .getGeneAttributes <- function(org) {
     if (org %in% c("hg18","hg19","mm9","tair10"))
         return(c(
@@ -344,6 +384,16 @@
         equcab3 = { return("ecaballus_gene_ensembl") },
         tair10 = { return("athaliana_eg_gene") }
     )
+}
+
+.getUcscToEnsembl <- function(org) {
+    u2e <- .ucscToEnsembl()
+    return(u2e[[org]])
+}
+
+.checkUcscToEnsembl <- function(org,ver) {
+    u2e <- getUcscToEnsembl()
+    return(ver %in% u2e[[org]])
 }
 
 .orgsWithNoVersion <- function() {

@@ -94,6 +94,11 @@
                 ncbiRefSeq=.getUcscTblTpl("ncbiRefSeq",what)
             ))
         },
+        danrer11 = {
+            return(list(
+                ncbiRefSeq=.getUcscTblTpl("ncbiRefSeq",what)
+            ))
+        },
         pantro4 = {
             warning("No NCBI RefSeq Genome annotation for Pan troglodytes ",
                 "pantro4! Will use UCSC RefSeq instead...",

@@ -82,7 +82,7 @@
                     .getUcscTblTpl("ensemblToGeneName",what),
                 ensemblSource=
                     .getUcscTblTpl("ensemblSource",what)
-            ))
+            )
         },
         dm6 = {
             def <- list(
@@ -1645,4 +1645,29 @@
                 "ORDER BY `chromosome`,`start`) AS tmp"))
         }
     )
+}
+
+.getUcscRefseqVersionedUtrQuery <- function() {
+    return(paste(
+        "SELECT refGene.bin AS `bin`,",
+        paste0("CONCAT(refGene.name,'.',",
+            "hgFixed.gbCdnaInfo.version) AS `name`,"),
+        "refGene.chrom AS `chrom`,",
+        "refGene.strand AS `strand`,",
+        "refGene.txStart AS `txStart`,",
+        "refGene.txEnd AS `txEnd`,",
+        "refGene.cdsStart AS `cdsStart`,",
+        "refGene.cdsEnd AS `cdsEnd`,",
+        "refGene.exonCount AS `exonCount`,",
+        "refGene.exonStarts AS `exonStarts`,",
+        "refGene.exonEnds AS `exonEnds`,",
+        "refGene.score AS `score`,",
+        "refGene.name2 AS `name2`,",
+        "refGene.cdsStartStat AS `cdsStartStat`,",
+        "refGene.cdsEndStat AS `cdsEndStat`,",
+        "refGene.exonFrames AS `exonFrames`",
+        "FROM `refGene` INNER JOIN hgFixed.gbCdnaInfo",
+        "ON refGene.name=hgFixed.gbCdnaInfo.acc",
+        "ORDER BY `chrom`,`txStart`"
+    ))
 }

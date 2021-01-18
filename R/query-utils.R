@@ -101,6 +101,95 @@ getUcscTableNameUtr <- function(org,refdb) {
         },
         refseq = {
             return("refGene")
+        },
+        ncbi = {
+            switch(org,
+                hg18 = {
+                    warning("No NCBI RefSeq Genome annotation for Homo ",
+                        "sapiens hg18! Will use UCSC RefSeq instead...",
+                        immediate.=TRUE)
+                    return("refGene")
+                },
+                hg19 = {
+                    return("ncbiRefSeq")
+                },
+                hg38 = {
+                    return("ncbiRefSeq")
+                },
+                mm9 = {
+                    warning("No NCBI RefSeq Genome annotation for Mus ",
+                        "musculus mm9! Will use UCSC RefSeq instead...",
+                        immediate.=TRUE)
+                    return("refGene")
+                },
+                mm10 = {
+                    return("ncbiRefSeq")
+                },
+                rn5 = {
+                    warning("No NCBI RefSeq Genome annotation for Rattus ",
+                        "norvegicus rn5! Will use UCSC RefSeq instead...",
+                        immediate.=TRUE)
+                    return("refGene")
+                },
+                rn6 = {
+                    return("ncbiRefSeq")
+                },
+                dm3 = {
+                    warning("No NCBI RefSeq Genome annotation for Drosophila ",
+                        "melanogaster dm3! Will use UCSC RefSeq instead...",
+                        immediate.=TRUE)
+                    return("refGene")
+                },
+                dm6 = {
+                    return("ncbiRefSeq")
+                },
+                danrer7 = {
+                    warning("No NCBI RefSeq Genome annotation for Danio ",
+                        "rerio danrer7! Will use UCSC RefSeq instead...",
+                        immediate.=TRUE)
+                    return("refGene")
+                },
+                danrer10 = {
+                    return("ncbiRefSeq")
+                    
+                },
+                danrer11 = {
+                    return("ncbiRefSeq")
+                },
+                pantro4 = {
+                    warning("No NCBI RefSeq Genome annotation for Pan ",
+                        " troglodytes pantro4! Will use UCSC RefSeq instead...",
+                        immediate.=TRUE)
+                    return("refGene")
+                },
+                pantro5 = {
+                    warning("No NCBI RefSeq Genome annotation for Pan ",
+                        " troglodytes pantro5! Will use UCSC RefSeq instead...",
+                        immediate.=TRUE)
+                    return("refGene")
+                },
+                susscr3 = {
+                    warning("No NCBI RefSeq Genome annotation for Sus scrofa ",
+                        " v3! Will use UCSC RefSeq instead...",
+                        immediate.=TRUE)
+                    return("refGene")
+                },
+                susscr11 = {
+                    warning("No NCBI RefSeq Genome annotation for Sus scrofa ",
+                        " v11! Will use UCSC RefSeq instead...",
+                        immediate.=TRUE)
+                    return("refGene")
+                },
+                equcab2 = {
+                    warning("No NCBI RefSeq Genome annotation for Equus ",
+                        " cabalus v2! Will use UCSC RefSeq instead...",
+                        immediate.=TRUE)
+                    return("refGene")
+                },
+                equcab3 = {
+                    return("ncbiRefSeq")
+                }
+            )
         }
     )
 }
@@ -493,6 +582,9 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
         },
         refseq = {
             return(.getUcscTabledefRefseq(org,what,versioned))
+        },
+        ncbi = {
+            return(.getUcscTabledefNcbi(org,what))
         }
     )
 }
@@ -699,7 +791,7 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
             },
             ncbiRefSeq = {
                 return(paste("CREATE TABLE",
-                    "`refGene` (",
+                    "`ncbiRefSeq` (",
                     "`bin` UNSIGNED INTEGER NOT NULL,",
                     "`name` TEXT NOT NULL,",
                     "`chrom` TEXT NOT NULL,",
@@ -836,6 +928,29 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
     )
 }
 
+.makeUcscRefseqUtrTable <- function(org,.rmysql=FALSE) {
+    vq <- .getUcscRefseqVersionedUtrQuery()
+    if (.rmysql) {
+        dbCreds <- .getUcscCredentials()
+        drv <- dbDriver("MySQL")
+        con <- dbConnect(drv,user=dbCreds[2],password=NULL,
+            dbname=getUcscOrganism(org),host=dbCreds[1])
+        rawAnn <- dbGetQuery(con,vq)
+        dbDisconnect(con)
+    }
+    else {
+        # Download tables, build sqlite and run vq
+        tmpSqlite <- getUcscDbl(org=org,refdb="ucsc",versioned=TRUE)
+        drv <- dbDriver("SQLite")
+        con <- dbConnect(drv,dbname=tmpSqlite)
+        rawAnn <- dbGetQuery(con,vq)
+        dbDisconnect(con)
+    }
+    utrTmp <- tempfile()
+    write.table(rawAnn,file=utrTmp,sep="\t",col.names=FALSE,row.names=FALSE,
+        quote=FALSE)
+}
+
 .getUcscCredentials <- function() {
     return(c(
         host="genome-mysql.cse.ucsc.edu",
@@ -844,26 +959,26 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
     ))
 }
 
-..getAllUcsc <- function(to) {
-    if (missing(to))
-        stop("Please provide a path to put the sqlite databases!")
-    if (!dir.exists(to))
-        dir.create(to,recursive=TRUE)
-        
-    for (refdb in getSupportedUcscDbs())
-        for (org in getSupportedOrganisms())
-            ..getUcscSqlite(org,refdb,to)
-}
-
-..getUcscSqlite <- function(org,refdb,to) {
-    if (missing(to))
-        stop("Please provide a path to put the sqlite databases!")
-    if (!dir.exists(to))
-        dir.create(to,recursive=TRUE)
-    
-    message("RETRIEVING ",org," FROM ",refdb)
-    dbTmp <- getUcscDbl(org=org,refdb=refdb)
-    name <- paste(org,"_",refdb,".sqlite",sep="")
-    file.copy(dbTmp,file.path(to,name),recursive=TRUE)
-    return()
-}
+#..getAllUcsc <- function(to) {
+#    if (missing(to))
+#        stop("Please provide a path to put the sqlite databases!")
+#    if (!dir.exists(to))
+#        dir.create(to,recursive=TRUE)
+#        
+#    for (refdb in getSupportedUcscDbs())
+#        for (org in getSupportedOrganisms())
+#            ..getUcscSqlite(org,refdb,to)
+#}
+#
+#..getUcscSqlite <- function(org,refdb,to) {
+#    if (missing(to))
+#        stop("Please provide a path to put the sqlite databases!")
+#    if (!dir.exists(to))
+#        dir.create(to,recursive=TRUE)
+#    
+#    message("RETRIEVING ",org," FROM ",refdb)
+#    dbTmp <- getUcscDbl(org=org,refdb=refdb)
+#    name <- paste(org,"_",refdb,".sqlite",sep="")
+#    file.copy(dbTmp,file.path(to,name),recursive=TRUE)
+#    return()
+#}

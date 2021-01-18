@@ -125,6 +125,18 @@
                     .getUcscTblTpl("ensemblSource",what)
             ))
         },
+        danrer11 = {
+            warning("No UCSC Genome annotation for Danio rerio v11! ",
+                "Will use RefSeq instead...",
+                immediate.=TRUE)
+            return(list(
+                refFlat=.getUcscTblTpl("refFlat",what),
+                ensemblToGeneName=
+                    .getUcscTblTpl("ensemblToGeneName",what),
+                ensemblSource=
+                    .getUcscTblTpl("ensemblSource",what)
+            ))
+        },
         pantro4 = {
             warning("No UCSC Genome annotation for Pan ",
                 "troglodytes! Will use RefSeq instead...",

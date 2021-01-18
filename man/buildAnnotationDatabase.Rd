@@ -1,29 +1,31 @@
 \name{buildAnnotationDatabase}
 \alias{buildAnnotationDatabase}
-\title{Build a local annotation database for metaseqR2}
+\title{Build a local genomic regions annotation database}
 \usage{
     buildAnnotationDatabase(organisms, sources,
-    db = file.path(system.file(package = "metaseqR2"),
+    db = file.path(system.file(package = "sitadela"),
         "annotation.sqlite"),
-    forceDownload = TRUE, rc = NULL)
+    versioned = FALSE, forceDownload = TRUE, rc = NULL)
 }
 \arguments{
     \item{organisms}{a list of organisms and versions
-    for which to download and build annotations. Check 
-    the main \code{\link{metaseqr2}} help page for details 
-    on supported organisms and the Details section below.}
+    for which to download and build annotations. See 
+    also Details.}
 
     \item{sources}{a character vector of public sources
-    from which to download and build annotations. Check 
-    the main \code{\link{metaseqr2}} help page for details 
-    on supported annotation sources.}
+    from which to download and build annotations. It can be
+    one or more of \code{"ensembl"}, \code{"ucsc"}, 
+    \code{"refseq"} or \code{"ncbi"}. See also Details.}
     
     \item{db}{a valid path (accessible at least by the
     current user) where the annotation database will be 
     set up. It defaults to 
-    \code{system.file(package = "metaseqR2"),}
+    \code{system.file(package = "sitadela"),}
     \code{"annotation.sqlite")} that is, the installation
-    path of metaseqR2 package. See also Details.}
+    path of sitadela package.}
+    
+    \item{versioned}{create an annotation database with
+    versioned genes and transcripts, when possible.}
     
     \item{forceDownload}{by default, 
     \code{buildAnnotationDatabase} will not download an
@@ -40,9 +42,11 @@
     database is created or updated.
 }
 \description{
-    This function creates a local annotation database to be
-    used with metaseqr2 so as to avoid long time on the fly 
-    annotation downloads and formatting.
+    This function is the main annotation database creator 
+    of sitadela. It creates a local SQLite database for
+    various organisms and categories of genomic regions.
+    Annotations are retrieved in simple, tab-delimited or
+    GRanges formats.
 }
 \details{
     Regarding the \code{organisms} argument, it is a list
@@ -70,13 +74,28 @@
     then the latest versions are downloaded in the case of 
     Ensembl.
     
-    Regarding \code{db}, this controls the location of the
-    installation database. If the default is used, then there is
-    no need to provide the local database path to any function
-    that uses the database (e.g. the main \code{metaseqr2}).
-    Otherwise, the user will either have to provide this each
-    time, or the annotation will have to be downloaded and used
-    on-the-fly.
+    The supported supported organsisms are, for human genomes 
+    \code{"hg18"}, \code{"hg19"} or \code{"hg38"}, for mouse 
+    genomes \code{"mm9"}, \code{"mm10"}, for rat genomes 
+    \code{"rn5"} or \code{"rn6"}, for drosophila genome
+    \code{"dm3"} or \code{"dm6"}, for zebrafish genome 
+    \code{"danrer7"}, \code{"danrer10"} or \code{"danrer11"}, 
+    for chimpanzee genome \code{"pantro4"}, \code{"pantro5"}, 
+    for pig genome \code{"susscr3"}, \code{"susscr11"}, for 
+    Arabidopsis thaliana genome \code{"tair10"} and for 
+    Equus caballus genome \code{"equcab2"} and \code{"equcab3"}. 
+    Finally, it can be \code{"USER_NAMED_ORG"} with a custom 
+    organism which has been imported to the annotation database 
+    by the user using a GTF/GFF file. For example 
+    \code{org="mm10_p1"}.
+    
+    Regarding \code{sources}, \code{"ucsc"} corresponds to 
+    UCSC Genome Browser annotated transcripts, \code{"refseq"}
+    corresponds to UCSC RefSeq maintained transcripts while 
+    \code{"ncbi"} corresponds to NCBI RefSeq annotated and 
+    maintained transcripts. UCSC, RefSeq and NCBI annotations 
+    are constructed by querying the UCSC Genome Browser 
+    database.
 }
 \examples{
 # Build a test database with one genome
