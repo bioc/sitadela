@@ -176,7 +176,14 @@ reduceExons <- function(gr) {
     
     # Start the reconstruction by getting new lengths and create names
     lens <- lengths(grList)
-    inds <- unlist(lapply(lens,function(j) return(seq_len(j))),use.names=FALSE)
+    strs <- as.character(runValue(strand(grList)))
+    #inds <- unlist(lapply(lens,function(j) return(seq_len(j))),use.names=FALSE)
+    inds <- unlist(lapply(seq_along(lens),function(j,L,S) {
+        if (S[j] == "+")
+            return(seq_len(L[j]))
+        else
+            return(rev(seq_len(L[j])))
+    },lens,strs),use.names=FALSE)
     grNew <- unname(unlist(grList))
     gene_id <- rep(gene,lens)
     exon_id <- paste(gene_id,"MEX",inds,sep="_")
@@ -222,7 +229,6 @@ reduceTranscriptsExons <- function(gr) {
     map <- map[trans,]
     
     # Gene ids, names and biotypes for later reconstruction
-    #gi <- as.character(map$gene_id)
     gn <- as.character(map$gene_name)
     bt <- as.character(map$biotype)
     
@@ -235,16 +241,20 @@ reduceTranscriptsExons <- function(gr) {
     
     # Start the reconstruction by getting new lengths and create names
     lens <- lengths(grList)
-    inds <- unlist(lapply(lens,function(j) return(seq_len(j))),use.names=FALSE)
+    strs <- as.character(runValue(strand(grList)))
+    #inds <- unlist(lapply(lens,function(j) return(seq_len(j))),use.names=FALSE)
+    inds <- unlist(lapply(seq_along(lens),function(j,L,S) {
+        if (S[j] == "+")
+            return(seq_len(L[j]))
+        else
+            return(rev(seq_len(L[j])))
+    },lens,strs),use.names=FALSE)
     grNew <- unname(unlist(grList))
     exon_id <- paste(rep(trans,lens),"MTE",inds,sep="_")
-    #transcript_id <- rep(gi,lens)
-    #gene_id <- rep(gi,lens)
     gene_name <- rep(gn,lens)
     biotype <- rep(bt,lens)
     newMeta <- DataFrame(
         exon_id=exon_id,
-        #gene_id=gene_id,
         transcript_id=rep(trans,lens),
         gene_name=gene_name,
         biotype=biotype
@@ -257,6 +267,5 @@ reduceTranscriptsExons <- function(gr) {
     tmp <- tmp[trans]
     len <- vapply(width(tmp),sum,integer(1))
     
-    #return(grNew)
     return(list(model=grNew,length=len))
 }

@@ -142,8 +142,6 @@ buildAnnotationDatabase <- function(organisms,sources,
                         "gene")
                     message("Merging transcripts for ",o," from ",s,
                         " version ",v)
-                    #annGr <- reduceTranscripts(annGr)
-                    #ann <- as.data.frame(annGr)
                     annList <- reduceTranscripts(annGr)
                     ann <- as.data.frame(annList$model)
                     ann <- ann[,c(1,2,3,6,7,5,8,9)]
@@ -203,8 +201,6 @@ buildAnnotationDatabase <- function(organisms,sources,
                     annGr <- .loadPrebuiltAnnotation(con,o,s,v,"gene","utr")
                     message("Merging gene 3' UTRs for ",o," from ",s,
                         " version ",v)
-                    #annGr <- reduceTranscripts(annGr)
-                    #ann <- as.data.frame(annGr)
                     annList <- reduceTranscripts(annGr)
                     ann <- as.data.frame(annList$model)
                     ann <- ann[,c(1,2,3,6,7,5,8,9)]
@@ -257,8 +253,6 @@ buildAnnotationDatabase <- function(organisms,sources,
                         .loadPrebuiltAnnotation(con,o,s,v,"transcript","utr")
                     message("Merging transcript 3' UTRs for ",o," from ",s,
                         " version ",v)
-                    #annGr <- reduceTranscriptsUtr(annGr)
-                    #ann <- as.data.frame(annGr)
                     annList <- reduceTranscriptsUtr(annGr)
                     ann <- as.data.frame(annList$model)
                     ann <- ann[,c(1,2,3,6,7,5,8,9)]
@@ -709,6 +703,53 @@ buildCustomAnnotation <- function(gtfFile,metadata,
             content_id=rep(nid,length(activeLength))
         )
         dbWriteTable(con,"active_length",active,row.names=FALSE,append=TRUE)
+    }
+    
+    # Then summarize the exons per transcript and write again with type 
+    # summarized_transcript_exon
+    if (.annotationExists(con,o,s,v,"summarized_transcript_exon")
+        && !rewrite)
+        message("Summarized exon annotation per transcript for ",o," from ",
+            s," version ",v," has already been created and will be skipped.\n",
+            "If you wish to recreate it choose rewrite = TRUE.")
+    else {
+        message("Retrieving summarized transcript exon annotation for ",o,
+            " from ",s," version ",v)
+    
+#~      annGr <- .loadPrebuiltAnnotation(con,o,s,v,"transcript",
+#~          "exon")
+#~      message("Merging exons for ",o," from ",s," version ",v)
+#~      annList <- reduceTranscriptsExons(annGr)
+#~      ann <- as.data.frame(annList$model)
+#~      ann <- ann[,c(1,2,3,6,7,5,8,9)]
+#~      names(ann)[1] <- "chromosome"
+#~      ann$chromosome <- as.character(ann$chromosome)
+#~      ann <- ann[order(ann$chromosome,ann$start),]
+#~      nr <- .dropAnnotation(con,o,s,v,
+#~          "summarized_transcript_exon")
+#~      nr <- .insertContent(con,o,s,v,"summarized_transcript_exon")
+#~      nid <- .annotationExists(con,o,s,v,
+#~          "summarized_transcript_exon",out="id")
+#~      ann$content_id <- rep(nid,nrow(ann))
+#~      sfSumTrExon <- sf
+#~      sfSumTrExon$content_id <- rep(nid,nrow(sfSumTrExon))
+#~      dbWriteTable(con,"summarized_transcript_exon",ann,
+#~          row.names=FALSE,append=TRUE)
+#~      dbWriteTable(con,"seqinfo",sfSumTrExon,row.names=FALSE,
+#~          append=TRUE)        
+                
+#~      activeLength <- annList$length
+#~      nr <- .dropAnnotation(con,o,s,v,"active_trans_exon_length")
+#~      nr <- .insertContent(con,o,s,v,"active_trans_exon_length")
+#~      nid <- .annotationExists(con,o,s,v,
+#~          "active_trans_exon_length",out="id")
+#~      active <- data.frame(
+#~          name=names(activeLength),
+#~          length=activeLength,
+#~          content_id=rep(nid,length(activeLength))
+#~      )
+#~      dbWriteTable(con,"active_trans_exon_length",active,
+#~          row.names=FALSE,append=TRUE)
     }
 }
 
@@ -1509,6 +1550,9 @@ getEnsemblAnnotation <- function(org,type,ver=NULL,tv=FALSE) {
                 bm$external_gene_id else bm$external_gene_name,
             biotype=bm$gene_biotype
         )
+        # At some point we should number the exons returned here, but it is not
+        # easy as there is heavy overlap... We are doing this at the 
+        # summarization level...
         rownames(ann) <- ann$exon_id
     }
     else if (type=="transexon") {
@@ -1614,10 +1658,13 @@ getUcscAnnotation <- function(org,type,refdb="ucsc",versioned=FALSE,
             starts <- as.numeric(strsplit(r[,"start"],",")[[1]])
             ends <- as.numeric(strsplit(r[,"end"],",")[[1]])
             nexons <- length(starts)
+            exonNumbering <- seq_len(nexons)
+            if (r[,"strand"] == "-")
+                exonNumbering <- rev(exonNumbering)
             ret <- data.frame(
                 rep(r[,"chromosome"],nexons),
                 starts,ends,
-                paste(r[,"exon_id"],"_e",seq_len(nexons),sep=""),
+                paste(r[,"exon_id"],"_e",exonNumbering,sep=""),
                 rep(r[,"strand"],nexons),
                 rep(r[,"gene_id"],nexons),
                 rep(r[,"gene_name"],nexons),
