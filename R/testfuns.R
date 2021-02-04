@@ -1,4 +1,110 @@
-testUcscAll() {
+testKnownBuild <- function(org,refdb,ver=NULL) {
+    if (missing(org)) {
+        org <- "mm9"
+        if (missing(refdb)) {
+            refdb <- "ensembl"
+            ver <- 67
+        }
+    }
+    
+    if (refdb=="ensembl") {
+        if (!is.null(ver)) {
+            organisms <- list(ver)
+            names(organisms) <- org
+        }
+        else {
+            organisms <- org
+            names(organisms) <- org
+        }
+        sources <- refdb
+    }
+    else {
+        organisms <- org
+        names(organisms) <- org
+        sources <- refdb
+    }
+    
+    tmpdb <- tempfile()
+    
+    message("Scheduling 2 tests")
+    message("==================================================\n")
+    message("Running test 1 of 2 scheduled")
+    tryCatch({
+        #organisms <- list(mm9=67)
+        #organisms <- list(dm3=77)
+        #sources <- "ensembl"
+        addAnnotation(organisms,sources,db=tmpdb,versioned=FALSE,
+            forceDownload=TRUE,rc=NULL)
+        genes <- loadAnnotation(genome=names(organisms)[1],refdb=sources[1],
+            type="gene",db=tmpdb)
+        if (is(genes,"GRanges"))
+            message("Test 1 successful!")
+    },error=function(e) {
+        message("Test 1 failed with error:")
+        message(e$message)
+    },finally="")
+    
+    message("\nRunning test 2 of 2 scheduled")
+    tryCatch({
+        org <- names(organisms)[1]
+        refdb <- sources[1]
+        n <- removeAnnotation(org,refdb,ver,db=tmpdb)
+        if (n > 0)
+            message("Test 2 successful!")
+    },error=function(e) {
+        message("Test 2 failed with error:")
+        message(e$message)
+    },finally="")
+    
+    message("Deleting temporary database ",tmpdb)
+    unlink(tmpdb)
+}
+
+testCustomBuild <- function(gtf,metadata) {
+    if (missing(gtf) || missing(metadata)) {
+        gtf <- file.path(system.file(package="sitadela"),"dummy.gtf.gz")
+        #gtf <- "dummy.gtf.gz"
+        chromInfo <- data.frame(length=c(1000L,2000L,1500L),
+            row.names=c("A","B","C"))
+        metadata=list(
+            organism="dummy",
+            source="dummy_db",
+            version=1,
+            chromInfo=chromInfo
+        )
+    }
+    
+    tmpdb <- tempfile()
+    
+    message("Scheduling 2 tests")
+    message("==================================================\n")
+    message("Running test 1 of 2 scheduled")
+    tryCatch({        
+        addCustomAnnotation(gtfFile=gtf,metadata=metadata,db=tmpdb)
+        genes <- loadAnnotation(genome=metadata$organism,refdb=metadata$source,
+            type="gene",db=tmpdb)
+        if (is(genes,"GRanges"))
+            message("Test 1 successful!")
+    },error=function(e) {
+        message("Test 1 failed with error:")
+        message(e$message)
+    },finally="")
+    
+    message("\nRunning test 2 of 2 scheduled")
+    tryCatch({
+        n <- removeAnnotation(metadata$organism,metadata$source,db=tmpdb)
+        if (n > 0)
+            message("Test 2 successful!")
+    },error=function(e) {
+        message("Test 2 failed with error:")
+        message(e$message)
+    },finally="")
+    
+    message("Deleting temporary database ",tmpdb)
+    unlink(tmpdb)
+}
+
+testUcscAll  <- function() {
     orgs <- getSupportedOrganisms()
     refdbs <- getSupportedUcscDbs()
     types <- c("gene","transcript","exon")
@@ -9,12 +115,12 @@ testUcscAll() {
     failNoVer <- testUcsc(orgs,refdbs,types)
     failVer <- testUcsc(orgs,refdbs,types,versioned=TRUE)
     return(list(
-        failNoVersion=failNoVer
+        failNoVersion=failNoVer,
         failVersion=failVer
     ))
 }
 
-testUcscUtrAll() {
+testUcscUtrAll <- function() {
     orgs <- getSupportedOrganisms()
     refdbs <- getSupportedUcscDbs()
     
@@ -24,7 +130,7 @@ testUcscUtrAll() {
     failNoVer <- testUcscUtr(orgs,refdbs)
     failVer <- testUcscUtr(orgs,refdbs,versioned=TRUE)
     return(list(
-        failNoVersion=failNoVer
+        failNoVersion=failNoVer,
         failVersion=failVer
     ))
 }
@@ -36,7 +142,7 @@ testEnsembl <- function(level=c("normal","long","short"),versioned=FALSE) {
     if (level == "normal") {
         org <- list(
             hg18=67,
-            hg19=74:75,
+            hg19=75,
             hg38=101:102,
             mm9=67,
             mm10=101:102,
@@ -44,7 +150,7 @@ testEnsembl <- function(level=c("normal","long","short"),versioned=FALSE) {
             rn6=101:102,
             dm3=77:78,
             dm6=101:102,
-            danrer7=78:79,
+            danrer7=79,
             danrer10=90:91,
             danrer11=101:102,
             pantro4=89:90,
@@ -71,7 +177,7 @@ testEnsembl <- function(level=c("normal","long","short"),versioned=FALSE) {
     succ <- fail <- 0
     failReasons <- rep(NA,nTests)
     
-    currTest <- 0    
+    currTest <- 0
     for (o in names(org)) {
         for (v in org[[o]]) {
             if (v == "auto") v <- NULL
@@ -174,8 +280,8 @@ testUcsc <- function(orgs,refdbs,types,versioned=FALSE) {
     message("Testing finished!\n")
     message("Summary")
     message("==================================================\n")
-    message("Succesful tests: ",succ," out of ",nTest)
-    message("Failed tests: ",fail," out of ",nTest)
+    message("Succesful tests: ",succ," out of ",nTests)
+    message("Failed tests: ",fail," out of ",nTests)
     message(" ")
     
     d <- which(is.na(failReasons))
@@ -233,7 +339,6 @@ testUcscUtr <- function(orgs,refdbs,versioned=FALSE) {
             },finally="")
             message("---------------------------------------------------\n")
         }
-        dbDisconnect(con)
     }
     
     message("Testing finished!\n")
@@ -533,13 +638,13 @@ testCustomGtf <- function(gtf) {
     message("Bye!\n")
 }
 
-testQuery <- function(query,org) {
-    dbCreds <- .getUcscCredentials()
-    drv <- dbDriver("MySQL")
-    con <- dbConnect(drv,user=dbCreds[2],password=NULL,dbname=org,
-        host=dbCreds[1])
-    rawAnn <- tryCatch(dbGetQuery(con,query),
-        error=function(e) print(e),
-        finally=dbDisconnect(con))
-    return(rawAnn)
-}
+#testQuery <- function(query,org) {
+#    dbCreds <- .getUcscCredentials()
+#    drv <- dbDriver("MySQL")
+#    con <- dbConnect(drv,user=dbCreds[2],password=NULL,dbname=org,
+#        host=dbCreds[1])
+#    rawAnn <- tryCatch(dbGetQuery(con,query),
+#        error=function(e) print(e),
+#        finally=dbDisconnect(con))
+#    return(rawAnn)
+#}

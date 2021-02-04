@@ -1,11 +1,10 @@
-\name{buildCustomAnnotation}
-\alias{buildCustomAnnotation}
-\title{Import custom annotation to the metaseqR2 annotation
-    database from GTF file}
+\name{addCustomAnnotation}
+\alias{addCustomAnnotation}
+\title{Import custom annotation to existing or new sitadela
+    annotation database from GTF file}
 \usage{
-    buildCustomAnnotation(gtfFile, metadata,
-    db = file.path(system.file(package = "metaseqR2"),
-        "annotation.sqlite"), rewrite=TRUE)
+    addCustomAnnotation(gtfFile, metadata, db = getDbPath(),
+        rewrite=TRUE)
 }
 \arguments{
     \item{gtfFile}{a GTF file containing the gene structure
@@ -17,11 +16,11 @@
     \item{db}{a valid path (accessible at least by the
     current user) where the annotation database will be 
     set up. It defaults to 
-    \code{system.file(package = "metaseqR2"),}
+    \code{system.file(package = "sitadela"),}
     \code{"annotation.sqlite")} that is, the installation
-    path of metaseqR2 package. See also Details.}
+    path of sitadela package. See also Details.}
     
-    \item{rewrite}{if custom annotation found, rwrite? 
+    \item{rewrite}{if custom annotation found, rewrite? 
     (default \code{FALSE}). Set to \code{TRUE} if you wish to 
     update the annotation database for a particular custom
     annotation.}
@@ -32,12 +31,12 @@
 }
 \description{
     This function imports a GTF file with some custom annotation
-    to the metaseqR2 annotation database.
+    to a sitadela annotation database.
 }
 \details{
     Regarding the \code{metadata} argument, it is a list
     with specific format which instructs 
-    \code{buildCustomAnnotation} on importing the custom
+    \code{addCustomAnnotation} on importing the custom
     annotation. Such a list may has the following members: 
     \itemize{
         \item \code{organism} a name of the organism which is
@@ -66,10 +65,9 @@
     Regarding \code{db}, this controls the location of the
     installation database. If the default is used, then there is
     no need to provide the local database path to any function
-    that uses the database (e.g. the main \code{metaseqr2}).
-    Otherwise, the user will either have to provide this each
-    time, or the annotation will have to be downloaded and used
-    on-the-fly.
+    that uses the database. Otherwise, the user will either have 
+    to provide this each time, or the annotation will have to be 
+    downloaded and used on-the-fly.
 }
 \examples{
 # Dummy database as example
@@ -82,8 +80,8 @@ chromInfo <- data.frame(length=c(1000L,2000L,1500L),
 
 # Build with the metadata list filled (you can also provide a version)
 if (.Platform$OS.type == "unix") {
-    buildCustomAnnotation(
-        gtfFile=file.path(system.file(package="metaseqR2"),
+    addCustomAnnotation(
+        gtfFile=file.path(system.file(package="sitadela"),
             "dummy.gtf"),
         metadata=list(
             organism="dummy",
@@ -96,7 +94,7 @@ if (.Platform$OS.type == "unix") {
 
     # Try to retrieve some data
     myGenes <- loadAnnotation(genome="dummy",refdb="dummy_db",
-        level="gene",type="gene",db=myDb)
+        type="gene",db=myDb)
     myGenes
 }
 
@@ -118,7 +116,7 @@ if (.Platform$OS.type == "unix") {
 #  "dasypus_novemcinctus/genebuild/Dasnov3.broad.Ascending_Colon_5.1.bam")
 
 ## Build with the metadata list filled (you can also provide a version)
-#buildCustomAnnotation(
+#addCustomAnnotation(
 #  gtfFile=file.path(customDir,"Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz"),
 #  metadata=list(
 #    organism="dasNov3_test",
@@ -130,7 +128,7 @@ if (.Platform$OS.type == "unix") {
 
 ## Try to retrieve some data
 #dasGenes <- loadAnnotation(genome="dasNov3_test",refdb="ensembl_test",
-#  level="gene",type="gene",db=myDb)
+#  type="gene",db=myDb)
 #dasGenes
 }
 \author{

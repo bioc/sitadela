@@ -1,11 +1,9 @@
-\name{buildAnnotationDatabase}
-\alias{buildAnnotationDatabase}
+\name{addAnnotation}
+\alias{addAnnotation}
 \title{Build a local genomic regions annotation database}
 \usage{
-    buildAnnotationDatabase(organisms, sources,
-    db = file.path(system.file(package = "sitadela"),
-        "annotation.sqlite"),
-    versioned = FALSE, forceDownload = TRUE, rc = NULL)
+    addAnnotation(organisms, sources, db = getDbPath(),
+        versioned = FALSE, forceDownload = TRUE, rc = NULL)
 }
 \arguments{
     \item{organisms}{a list of organisms and versions
@@ -28,7 +26,7 @@
     versioned genes and transcripts, when possible.}
     
     \item{forceDownload}{by default, 
-    \code{buildAnnotationDatabase} will not download an
+    \code{addAnnotation} will not download an
     existing annotation again (\code{FALSE}). Set to 
     \code{TRUE} if you wish to update the annotation 
     database for a particular version.}
@@ -51,7 +49,7 @@
 \details{
     Regarding the \code{organisms} argument, it is a list
     with specific format which instructs 
-    \code{buildAnnotationDatabase} on which organisms and
+    \code{addAnnotation} on which organisms and
     versions to download from the respective sources. Such
     a list may have the format: 
     \code{organisms=list(hg19=75, mm9=67, mm10=96:97)}
@@ -105,7 +103,7 @@ organisms <- list(mm9=67)
 sources <- "ensembl"
 
 # If the example is not running in a multicore system, rc is ignored
-#buildAnnotationDatabase(organisms,sources,db=myDb,rc=0.5)
+#addAnnotation(organisms,sources,db=myDb,rc=0.5)
 
 # A more complete case, don't run as example
 # Since we are using Ensembl, we can also ask for a version
@@ -119,11 +117,11 @@ sources <- "ensembl"
 
 ## Build on the default location (depending on package location, it may
 ## require root/sudo)
-#buildAnnotationDatabase(organisms,sources)
+#addAnnotation(organisms,sources)
 
 ## Build on an alternative location
 #myDb <- file.path(path.expand("~"),"my_ann.sqlite")
-#buildAnnotationDatabase(organisms,sources,db=myDb)
+#addAnnotation(organisms,sources,db=myDb)
 }
 \author{
     Panagiotis Moulos

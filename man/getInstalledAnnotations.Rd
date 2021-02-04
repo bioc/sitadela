@@ -1,11 +1,11 @@
 \name{getInstalledAnnotations}
 \alias{getInstalledAnnotations}
-\title{Load a metaseqR2 annotation element}
+\title{List installed sitadela annotations}
 \usage{
     getInstalledAnnotations(obj = NULL)
 }
 \arguments{
-    \item{obj}{\code{NULL} or the path to a metaseqR2
+    \item{obj}{\code{NULL} or the path to a sitadela
     SQLite annotation database. If \code{NULL}, the
     function will try to guess the location of the 
     SQLite database.}
@@ -20,7 +20,7 @@
     
 }
 \examples{
-db <- file.path(system.file(package="metaseqR2"),
+db <- file.path(system.file(package="sitadela"),
     "annotation.sqlite")
 if (file.exists(db))
     ig <- getInstalledAnnotations(obj=db)

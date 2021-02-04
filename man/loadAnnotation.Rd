@@ -1,14 +1,14 @@
 \name{loadAnnotation}
 \alias{loadAnnotation}
-\title{Load a simple annotation element}
+\title{Load a sitadela simple annotation element}
 \usage{
     loadAnnotation(genome, refdb, 
-        level = c("gene", "transcript", "exon"),
-        type = c("gene", "exon", "utr"), version="auto",
-        wtv = FALSE,
+        type = c("gene", "transcript", "utr",
+            "transutr", "transexon", "exon"), 
+        version="auto", wtv = FALSE,
         db = file.path(system.file(package = "sitadela"),
-            "annotation.sqlite"), summarized = FALSE, 
-            asdf = FALSE, rc = NULL)
+            "annotation.sqlite"), 
+        summarized = FALSE, asdf = FALSE, rc = NULL)
 }
 \arguments{
     \item{genome}{a sitadela supported organism or a custom 
@@ -17,19 +17,17 @@
     \item{refdb}{a sitadela supported annotation source or a 
     custom name imported by the user.}
     
-    \item{level}{load annotation at different genomic 
-    transcriptional units, can be one of \code{"gene"}
-    (default), \code{"transcript"}, \code{"exon"} or 
-    \code{"utr"} for loading 3' UTR regions.}
-    
-    \item{type}{same as the \code{countType} in 
-    \code{\link{metaseqr2}}.}
+    \item{type}{the transcriptional unit annotation level 
+    to load. It can be one of \code{"gene"} (default),
+    \code{"transcript"}, \code{"utr"}, \code{"transexon"},
+    \code{"transutr"}, \code{"exon"}. See Details for 
+    further explanation of each option.}
     
     \item{version}{the version of the annotation to use. 
     See Details.}
     
     \item{wtv}{load annotations with versioned genes and
-    transcripts where available.}
+    transcripts when/where available.}
     
     \item{db}{same as the \code{db} in 
     \code{\link{buildAnnotationDatabase}}.}
@@ -48,12 +46,12 @@
     \code{\link{data.frame}} with the requested annotation.
 }
 \description{
-    This function creates loads an annotation element from
-    the sitadela annotation database. If the annotation is 
-    not found and the organism is supported, the annotation 
-    is created on the fly but not imported in the local 
-    database. Use \code{buildAnnotationDatabase} for this 
-    purpose.
+    This function loads an annotation element from a local 
+    sitadela annotation database. If the annotation is not
+    found and the organism is supported, the annotation is 
+    fetched and created on the fly but not imported in the 
+    local database. Use \code{buildAnnotationDatabase} for 
+    this purpose (build/update/add annotations).
 }
 \details{
     Regarding \code{org}, it can be, for human genomes 
@@ -71,6 +69,29 @@
     by the user using a GTF/GFF file. For example 
     \code{org="mm10_p1"}.
     
+    Regarding \code{type}, it defines the level of 
+    transcriptional unit (gene, transcript, 3' UTR, exon)
+    coordinates to be loaded or fetched if not present. The
+    following types are supported:
+    
+    \itemize{
+        \item \code{"gene"}: canonical gene coordinates are
+        retrieved from the chosen database.
+        \item \code{"transcript"}: all transcript 
+        coordinates are retrieved from the chosen database.
+        \item \code{"utr"}: all 3' UTR coordinates are
+        retrieved from the chosen database, grouped per 
+        gene.
+        \item \code{"transutr"}: all 3' UTR coordinates are
+        retrieved from the chosen database, grouped per \
+        transcript.
+        \item \code{"transexon"}: all exon coordinates are
+        retrieved from the chosen database, grouped per 
+        transcript.
+        \item \code{"exon"}: all exon coordinates are
+        retrieved from the chosen database.
+    }
+    
     Regarding \code{version}, this is an integer denoting the
     version of the annotation to use from the local annotation
     database or fetch on the fly. For Ensembl, it corresponds
@@ -82,7 +103,7 @@ db <- file.path(system.file(package="sitadela"),
     "annotation.sqlite")
 if (file.exists(db))
     gr <- loadAnnotation(genome="hg19",refdb="ensembl",
-        level="gene",type="gene",db=db)
+        type="gene",db=db)
 }
 \author{
     Panagiotis Moulos

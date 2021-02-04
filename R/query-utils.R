@@ -266,6 +266,16 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
 .localTblDef <- function() {
     return(list(
         enable_fkey="PRAGMA foreign_keys=1;",
+        #content=paste(
+        #    "CREATE TABLE IF NOT EXISTS content (",
+        #    "_id INTEGER PRIMARY KEY AUTOINCREMENT,",
+        #    "source TEXT,",
+        #    "organism TEXT,",
+        #    "version INTEGER,",
+        #    "type TEXT,",
+        #    "user INTEGER",
+        #    ");"
+        #),
         content=paste(
             "CREATE TABLE IF NOT EXISTS content (",
             "_id INTEGER PRIMARY KEY AUTOINCREMENT,",
@@ -273,6 +283,7 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
             "organism TEXT,",
             "version INTEGER,",
             "type TEXT,",
+            "has_tv INTEGER,",
             "user INTEGER",
             ");"
         ),
@@ -500,11 +511,11 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
     ))
 }
 
-.insertContent <- function(con,o,s,v,t,u=0) {
+.insertContent <- function(con,o,s,v,t,h=0,u=0) {
     query <- paste(
-        "INSERT INTO content (source, organism, version, type, user) ",
-        "VALUES (",paste("'",s,"', ","'",o,"', ",v,", '",t,"', ",u,sep=""),")",
-        sep=""
+        "INSERT INTO content (source, organism, version, type, has_tv, user) ",
+        "VALUES (",paste("'",s,"', ","'",o,"', ",v,", '",t,"', ",h,", ",u,
+        sep=""),")",sep=""
     )
     nr <- dbExecute(con,query)
     return(nr)
@@ -518,10 +529,12 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
     return(dbGetQuery(con,"SELECT * FROM content WHERE user=1"))
 }
 
-.annotationExists <- function(con,o,s,v=NULL,t=NULL,out=c("tf","nr","id")) {
+.annotationExists <- function(con,o,s,v=NULL,t=NULL,h=FALSE,
+    out=c("tf","nr","id")) {
     out <- out[1]
+    h <- ifelse(h,1,0)
     query <- paste("SELECT _id FROM content WHERE source='",s,
-        "' AND organism='",o,"'",sep="")
+        "' AND organism='",o,"' AND has_tv=",h,sep="")
     if (!is.null(v))
         query <- paste(query," AND version=",v,sep="")
     if (!is.null(t))
@@ -537,7 +550,7 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
     }
 }
 
-.dropAnnotation <- function(con,o,s,v,t) {
+.dropAnnotation <- function(con,o,s,v,t,h) {
     # At least organism must exist
     if (missing(o))
         stop("At least an organism name must be provided for deletion!")
@@ -546,12 +559,14 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
     # be enough.
     query <- paste("DELETE FROM content WHERE organism='",o,"'",sep="")
     # Augment according to given arguments.
-    if (!missing(s))
+    if (!missing(s) && !is.null(s))
         query <- paste(query," AND source='",s,"'",sep="")
-    if (!missing(v))
+    if (!missing(v) && !is.null(v))
         query <- paste(query," AND version=",v,sep="")
-    if (!missing(t))
+    if (!missing(t) && !is.null(t))
         query <- paste(query," AND type='",t,"'",sep="")
+    if (!missing(h) && !is.null(h))
+        query <- paste(query," AND has_tv=",h,sep="")
     # Execute
     nr <- dbExecute(con,query)
     return(nr)

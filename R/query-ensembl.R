@@ -340,25 +340,75 @@
 .ucscToEnsembl <- function() {
     return(list(
         hg18=67,
-        hg19=74:75,
-        hg38=76:102,
+        hg19=75,
+        hg38=77:102,
         mm9=67,
-        mm10=74:102,
-        rn5=74:79,
-        rn6=80:102,
-        dm3=c(67,74:78),
-        dm6=79:102,
-        danrer7=c(67,74:79),
-        danrer10=80:91,
+        mm10=88:102,
+        rn5=77,
+        rn6=88:102,
+        dm3=77,
+        dm6=88:102,
+        danrer7=77,
+        danrer10=88:91,
         danrer11=92:102,
-        pantro4=c(67,74:90),
+        pantro4=88:90,
         pantro5=91:102,
         #pantro6=,
-        susscr3=c(67,74:89),
+        susscr3=88:89,
         susscr11=90:102,
-        equcab2=c(67,74:94),
-        equcab3=c(95:102)
+        equcab2=88:94,
+        equcab3=95:102
     ))
+}
+
+.getHost <- function(org,ver=NULL) {
+    if (!requireNamespace("biomaRt"))
+        stop("The Bioconductor package biomaRt is required to proceed!")
+    
+    org <- tolower(org[1])
+    .checkTextArgs("org",org,getSupportedOrganisms(),multiarg=FALSE)
+    if (!is.null(ver) 
+        && (!is.numeric(ver) || is.na(suppressWarnings(as.numeric(ver)))))
+        stop("ver must be numeric or coercible to numeric if not NULL!")
+        
+    if (org == "tair10")
+        return("plants.ensembl.org")
+    
+    aver <- .getUcscToEnsembl(org)
+    if (!is.null(ver) && !(ver %in% aver)) {
+        warning("Version ",ver," not available/existing for ",org,"! Will ",
+            "use the latest available version...",immediate.=TRUE)
+        ver <- NULL
+    }
+    
+    if (is.null(ver)) {
+        u2e <- .ucscToEnsembl()
+        vers <- u2e[[org]]
+        ver <- vers[length(vers)]
+    }
+    
+    ea <- biomaRt::listEnsemblArchives()
+    i <- grep(as.character(ver),ea[,"version"])
+    if (length(i) > 0) {
+        if (ea[i,"current_release"] == "*")
+            return("http://www.ensembl.org")
+        else
+            return(ea[i,"url"])
+    }
+    else {
+        warning("Version ",ver," not found in biomaRt archives for ",org,"! ",
+            "Will use the latest available version for ",org,"...",
+            immediate.=TRUE)
+        u2e <- .ucscToEnsembl()
+        vers <- u2e[[org]]
+        for (v in rev(vers)) {
+            newi <- grep(as.character(v),ea[,"version"])
+            if (length(newi) > 0)
+                return(ea[newi,"url"])
+        }
+    }
+    # If everything fails...
+    return(NULL)
 }
 
 .getDataset <- function(org) {
@@ -384,6 +434,31 @@
         equcab3 = { return("ecaballus_gene_ensembl") },
         tair10 = { return("athaliana_eg_gene") }
     )
+}
+
+.validateEnsemblVersions <- function(o,v) {
+    ea <- biomaRt::listEnsemblArchives()
+    found <- as.character(v) %in% ea[,"version"]
+    if (any(!found)) {
+        nf <- which(!found)
+        warning("Version(s) ",paste0(v[nf],collapse=", ")," not found in ",
+            "biomaRt archives for current organism!\nWill use the latest ",
+            "available version(s)...",immediate.=TRUE)
+        newv <- v[-nf]
+        if (length(newv) == 0) {
+            warning("No Ensembl versions left after validation! Will return ",
+                "only the latest available...",immediate.=TRUE)
+            u2e <- .ucscToEnsembl()
+            vers <- u2e[[o]]
+            for (newv in rev(vers)) {
+                newi <- grep(as.character(newv),ea[,"version"])
+                if (length(newi) > 0)
+                    return(newv)
+            }
+        }
+        return(newv)
+    }
+    return(v)
 }
 
 .getUcscToEnsembl <- function(org) {

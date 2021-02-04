@@ -1,6 +1,5 @@
-buildAnnotationDatabase <- function(organisms,sources,
-    db=file.path(system.file(package="sitadela"),"annotation.sqlite"),
-    versioned=FALSE,forceDownload=TRUE,rc=NULL) {
+addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
+    forceDownload=TRUE,rc=NULL) {
     if (missing(organisms))
         organisms <- getSupportedOrganisms()
     if (missing(sources))
@@ -73,21 +72,24 @@ buildAnnotationDatabase <- function(organisms,sources,
                         
             for (v in vs) {
                 # Retrieve gene annotations
-                if (.annotationExists(con,o,s,v,"gene") && !forceDownload)
+                if (.annotationExists(con,o,s,v,"gene",versioned) 
+                    && !forceDownload)
                     message("Gene annotation for ",o," from ",s," version ",v,
                         " has already been created and will be skipped.\nIf ",
                         "you wish to recreate it choose forceDownload = TRUE.")
                 else {
                     message("Retrieving gene annotation for ",o," from ",s,
                         " version ",v)
-                    ann <- getAnnotation(o,"gene",refdb=s,ver=v,rc=rc)
+                    ann <- getAnnotation(o,"gene",refdb=s,ver=v,tv=versioned,
+                        rc=rc)
                     
                     # First drop if previously exists
-                    nr <- .dropAnnotation(con,o,s,v,"gene")
+                    nr <- .dropAnnotation(con,o,s,v,"gene",versioned)
                     # Then insert to the contents table so as to get the content
                     # id to attach in the annotation table
-                    nr <- .insertContent(con,o,s,v,"gene")
-                    nid <- .annotationExists(con,o,s,v,"gene",out="id")
+                    nr <- .insertContent(con,o,s,v,"gene",versioned)
+                    nid <- .annotationExists(con,o,s,v,"gene",versioned,
+                        out="id")
                     # If something happens, the whole procedure will break
                     # anyway
                     # Add content_id
@@ -101,7 +103,8 @@ buildAnnotationDatabase <- function(organisms,sources,
                 }
                 
                 # Retrieve transcript annotations
-                if (.annotationExists(con,o,s,v,"transcript") && !forceDownload)
+                if (.annotationExists(con,o,s,v,"transcript",versioned) 
+                    && !forceDownload)
                     message("Transcript annotation for ",o," from ",s,
                         " version ",v," has already been created and will be ",
                         "skipped.\nIf you wish to recreate it choose ",
@@ -109,10 +112,12 @@ buildAnnotationDatabase <- function(organisms,sources,
                 else {
                     message("Retrieving transcript annotation for ",o,
                         " from ",s," version ",v)
-                    ann <- getAnnotation(o,"transcript",refdb=s,ver=v,rc=rc)
-                    nr <- .dropAnnotation(con,o,s,v,"transcript")
-                    nr <- .insertContent(con,o,s,v,"transcript")
-                    nid <- .annotationExists(con,o,s,v,"transcript",out="id")
+                    ann <- getAnnotation(o,"transcript",refdb=s,ver=v,
+                        tv=versioned,rc=rc)
+                    nr <- .dropAnnotation(con,o,s,v,"transcript",versioned)
+                    nr <- .insertContent(con,o,s,v,"transcript",versioned)
+                    nid <- .annotationExists(con,o,s,v,"transcript",versioned,
+                        out="id")
                     ann$content_id <- rep(nid,nrow(ann))
                     sfTranscript <- sf
                     sfTranscript$content_id <- rep(nid,nrow(sfTranscript))
@@ -124,22 +129,21 @@ buildAnnotationDatabase <- function(organisms,sources,
                 
                 # Then summarize the transcripts and write again with type 
                 # sum_transcript
-                if (.annotationExists(con,o,s,v,"summarized_transcript") 
-                    && !forceDownload)
+                if (.annotationExists(con,o,s,v,"summarized_transcript",
+                    versioned) && !forceDownload)
                     message("Summarized transcript annotation for ",o," from ",
                         s," version ",v," has already been created and will ",
                         "be skipped.\nIf you wish to recreate it choose ",
                         "forceDownload = TRUE.")
                 else {
-                    if (!.annotationExists(con,o,s,v,"transcript")) 
+                    if (!.annotationExists(con,o,s,v,"transcript",versioned)) 
                         stop("Transcript annotation for ",o," from ",s,
                             " version ",v," is required in order to build ",
                             "predefined merged transcript regions for read ",
                             "counting.\nPlease rerun the ",
-                            "buildAnnotationDatabase function with ",
+                            "addAnnotation function with ",
                             "appropriate parameters.")
-                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"transcript",
-                        "gene")
+                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"transcript")
                     message("Merging transcripts for ",o," from ",s,
                         " version ",v)
                     annList <- reduceTranscripts(annGr)
@@ -149,10 +153,12 @@ buildAnnotationDatabase <- function(organisms,sources,
                     ann$chromosome <- as.character(ann$chromosome)
                     ann <- ann[order(ann$chromosome,ann$start),]
                     
-                    nr <- .dropAnnotation(con,o,s,v,"summarized_transcript")
-                    nr <- .insertContent(con,o,s,v,"summarized_transcript")
+                    nr <- .dropAnnotation(con,o,s,v,"summarized_transcript",
+                        versioned)
+                    nr <- .insertContent(con,o,s,v,"summarized_transcript",
+                        versioned)
                     nid <- .annotationExists(con,o,s,v,"summarized_transcript",
-                        out="id")
+                        versioned,out="id")
                     ann$content_id <- rep(nid,nrow(ann))
                     sfSumTranscript <- sf
                     sfSumTranscript$content_id <- rep(nid,nrow(sfSumTranscript))
@@ -163,17 +169,19 @@ buildAnnotationDatabase <- function(organisms,sources,
                 }
                 
                 # Retrieve 3' UTR annotations
-                if (.annotationExists(con,o,s,v,"utr") && !forceDownload)
+                if (.annotationExists(con,o,s,v,"utr",versioned) 
+                    && !forceDownload)
                     message("3' UTR annotation for ",o," from ",s," version ",
                         v," has already been created and will be skipped.\nIf ",
                         "you wish to recreate it choose forceDownload = TRUE.")
                 else {
                     message("Retrieving 3' UTR annotation for ",o,
                         " from ",s," version ",v)
-                    ann <- getAnnotation(o,"utr",refdb=s,ver=v,rc=rc)
-                    nr <- .dropAnnotation(con,o,s,v,"utr")
-                    nr <- .insertContent(con,o,s,v,"utr")
-                    nid <- .annotationExists(con,o,s,v,"utr",out="id")
+                    ann <- getAnnotation(o,"utr",refdb=s,ver=v,tv=versioned,
+                        rc=rc)
+                    nr <- .dropAnnotation(con,o,s,v,"utr",versioned)
+                    nr <- .insertContent(con,o,s,v,"utr",versioned)
+                    nid <- .annotationExists(con,o,s,v,"utr",versioned,out="id")
                     ann$content_id <- rep(nid,nrow(ann))
                     sfUtr <- sf
                     sfUtr$content_id <- rep(nid,nrow(sfUtr))
@@ -185,20 +193,20 @@ buildAnnotationDatabase <- function(organisms,sources,
                 
                 # Then summarize the 3'utrs per gene and write again with type 
                 # sum_utr
-                if (.annotationExists(con,o,s,v,"summarized_3utr")
+                if (.annotationExists(con,o,s,v,"summarized_3utr",versioned)
                     && !forceDownload)
                     message("Summarized 3' UTR annotation for ",o," from ",
                         s," version ",v," has already been created and will ",
                         "be skipped.\nIf you wish to recreate it choose ",
                         "forceDownload = TRUE.")
                 else {
-                    if (!.annotationExists(con,o,s,v,"utr")) 
+                    if (!.annotationExists(con,o,s,v,"utr",versioned)) 
                         stop("3' UTR annotation for ",o," from ",s," version ",
                             vs," is required in order to build predefined ",
                             "merged 3' UTR regions for read counting.\nPlease ",
-                            "rerun the buildAnnotationDatabase function with ",
+                            "rerun the addAnnotation function with ",
                             "appropriate parameters.")
-                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"gene","utr")
+                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"utr")
                     message("Merging gene 3' UTRs for ",o," from ",s,
                         " version ",v)
                     annList <- reduceTranscripts(annGr)
@@ -207,10 +215,10 @@ buildAnnotationDatabase <- function(organisms,sources,
                     names(ann)[1] <- "chromosome"
                     ann$chromosome <- as.character(ann$chromosome)
                     ann <- ann[order(ann$chromosome,ann$start),]
-                    nr <- .dropAnnotation(con,o,s,v,"summarized_3utr")
-                    nr <- .insertContent(con,o,s,v,"summarized_3utr")
+                    nr <- .dropAnnotation(con,o,s,v,"summarized_3utr",versioned)
+                    nr <- .insertContent(con,o,s,v,"summarized_3utr",versioned)
                     nid <- .annotationExists(con,o,s,v,"summarized_3utr",
-                        out="id")
+                        versioned,out="id")
                     ann$content_id <- rep(nid,nrow(ann))
                     sfSumUtr <- sf
                     sfSumUtr$content_id <- rep(nid,nrow(sfSumUtr))
@@ -220,10 +228,12 @@ buildAnnotationDatabase <- function(organisms,sources,
                         append=TRUE)
                     
                     activeLength <- annList$length
-                    nr <- .dropAnnotation(con,o,s,v,"active_utr_length")
-                    nr <- .insertContent(con,o,s,v,"active_utr_length")
+                    nr <- .dropAnnotation(con,o,s,v,"active_utr_length",
+                        versioned)
+                    nr <- .insertContent(con,o,s,v,"active_utr_length",
+                        versioned)
                     nid <- .annotationExists(con,o,s,v,"active_utr_length",
-                        out="id")
+                        versioned,out="id")
                     active <- data.frame(
                         name=names(activeLength),
                         length=activeLength,
@@ -235,22 +245,22 @@ buildAnnotationDatabase <- function(organisms,sources,
                 
                 # Then summarize the 3'utrs per transcript and write again with 
                 # type sum_utr
-                if (.annotationExists(con,o,s,v,"summarized_3utr_transcript")
-                    && !forceDownload)
+                if (.annotationExists(con,o,s,v,"summarized_3utr_transcript",
+                    versioned) && !forceDownload)
                     message("Summarized 3' UTR annotation per transcript for ",
                         o," from ",s," version ",v," has already been created ",
                         "and will be skipped.\nIf you wish to recreate it ",
                         "choose forceDownload = TRUE.")
                 else {
-                    if (!.annotationExists(con,o,s,v,"utr"))
+                    if (!.annotationExists(con,o,s,v,"utr",versioned))
                         stop("3' UTR annotation per transcript for ",o," from ",
                             s," version ",v," is required in order to build ",
                             "predefined merged 3'UTR regions for read ",
                             "counting.\nPlease rerun the ",
-                            "buildAnnotationDatabase function with ",
+                            "addAnnotation function with ",
                             "appropriate parameters.")
                     annGr <- 
-                        .loadPrebuiltAnnotation(con,o,s,v,"transcript","utr")
+                        .loadPrebuiltAnnotation(con,o,s,v,"utr")
                     message("Merging transcript 3' UTRs for ",o," from ",s,
                         " version ",v)
                     annList <- reduceTranscriptsUtr(annGr)
@@ -259,11 +269,12 @@ buildAnnotationDatabase <- function(organisms,sources,
                     names(ann)[1] <- "chromosome"
                     ann$chromosome <- as.character(ann$chromosome)
                     ann <- ann[order(ann$chromosome,ann$start),]
-                    nr <- 
-                        .dropAnnotation(con,o,s,v,"summarized_3utr_transcript")
-                    nr <- .insertContent(con,o,s,v,"summarized_3utr_transcript")
+                    nr <- .dropAnnotation(con,o,s,v,
+                        "summarized_3utr_transcript",versioned)
+                    nr <- .insertContent(con,o,s,v,"summarized_3utr_transcript",
+                        versioned)
                     nid <- .annotationExists(con,o,s,v,
-                        "summarized_3utr_transcript",out="id")
+                        "summarized_3utr_transcript",versioned,out="id")
                     ann$content_id <- rep(nid,nrow(ann))
                     sfSumUtrTranscript <- sf
                     sfSumUtrTranscript$content_id <- 
@@ -274,10 +285,12 @@ buildAnnotationDatabase <- function(organisms,sources,
                         row.names=FALSE,append=TRUE)
                     
                     activeLength <- annList$length
-                    nr <- .dropAnnotation(con,o,s,v,"active_trans_utr_length")
-                    nr <- .insertContent(con,o,s,v,"active_trans_utr_length")
+                    nr <- .dropAnnotation(con,o,s,v,"active_trans_utr_length",
+                        versioned)
+                    nr <- .insertContent(con,o,s,v,"active_trans_utr_length",
+                        versioned)
                     nid <- .annotationExists(con,o,s,v,
-                        "active_trans_utr_length",out="id")
+                        "active_trans_utr_length",versioned,out="id")
                     active <- data.frame(
                         name=names(activeLength),
                         length=activeLength,
@@ -288,17 +301,20 @@ buildAnnotationDatabase <- function(organisms,sources,
                 }
                 
                 # Retrieve exon annotations
-                if (.annotationExists(con,o,s,v,"exon") && !forceDownload)
+                if (.annotationExists(con,o,s,v,"exon",versioned) 
+                    && !forceDownload)
                     message("Exon annotation for ",o," from ",s," version ",v,
                         " has already been created and will be skipped.\nIf ",
                         "you wish to recreate it choose forceDownload = TRUE.")
                 else {
                     message("Retrieving exon annotation for ",o," from ",s,
                         " version ",v)
-                    ann <- getAnnotation(o,"exon",refdb=s,ver=v,rc=rc)
-                    nr <- .dropAnnotation(con,o,s,v,"exon")
-                    nr <- .insertContent(con,o,s,v,"exon")
-                    nid <- .annotationExists(con,o,s,v,"exon",out="id")
+                    ann <- getAnnotation(o,"exon",refdb=s,ver=v,tv=versioned,
+                        rc=rc)
+                    nr <- .dropAnnotation(con,o,s,v,"exon",versioned)
+                    nr <- .insertContent(con,o,s,v,"exon",versioned)
+                    nid <- .annotationExists(con,o,s,v,"exon",versioned,
+                        out="id")
                     ann$content_id <- rep(nid,nrow(ann))
                     sfExon <- sf
                     sfExon$content_id <- rep(nid,nrow(sfExon))
@@ -309,7 +325,8 @@ buildAnnotationDatabase <- function(organisms,sources,
                 }
                 
                 # Retrieve extended annotations
-                if (.annotationExists(con,o,s,v,"transexon") && !forceDownload)
+                if (.annotationExists(con,o,s,v,"transexon",versioned) 
+                    && !forceDownload)
                     message("Extended exon annotation for ",o," from ",s,
                         " version ",v," has already been created and will be ",
                         "skipped.\nIf you wish to recreate it choose ",
@@ -317,10 +334,12 @@ buildAnnotationDatabase <- function(organisms,sources,
                 else {
                     message("Retrieving extended exon annotation for ",o,
                         " from ",s," version ",v)
-                    ann <- getAnnotation(o,"transexon",refdb=s,ver=v,rc=rc)
-                    nr <- .dropAnnotation(con,o,s,v,"transexon")
-                    nr <- .insertContent(con,o,s,v,"transexon")
-                    nid <- .annotationExists(con,o,s,v,"transexon",out="id")
+                    ann <- getAnnotation(o,"transexon",refdb=s,ver=v,
+                        tv=versioned,rc=rc)
+                    nr <- .dropAnnotation(con,o,s,v,"transexon",versioned)
+                    nr <- .insertContent(con,o,s,v,"transexon",versioned)
+                    nid <- .annotationExists(con,o,s,v,"transexon",versioned,
+                        out="id")
                     ann$content_id <- rep(nid,nrow(ann))
                     sfTrExon <- sf
                     sfTrExon$content_id <- rep(nid,nrow(sfExon))
@@ -332,22 +351,22 @@ buildAnnotationDatabase <- function(organisms,sources,
                 
                 # Then summarize the exons per gene and write again with type 
                 # summarized_exon
-                if (.annotationExists(con,o,s,v,"summarized_exon")
+                if (.annotationExists(con,o,s,v,"summarized_exon",versioned)
                     && !forceDownload)
                     message("Summarized exon annotation for ",o," from ",s,
                         " version ",v," has already been created and will be ",
                         "skipped.\nIf you wish to recreate it choose ",
                         "forceDownload = TRUE.")
                 else {
-                    if (!.annotationExists(con,o,s,v,"exon")) 
+                    if (!.annotationExists(con,o,s,v,"exon",versioned)) 
                         stop("Exon annotation for ",o," from ",s," version ",v,
                             " is required in order to build predefined merged ",
                             "exon regions for RNA-Seq (exon) coverage ",
                             "calculations.\nPlease rerun the ",
-                            "buildAnnotationDatabase function with ",
+                            "addAnnotation function with ",
                             "appropriate parameters.")
                             
-                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"exon","exon")
+                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"exon")
                     message("Merging exons for ",o," from ",s," version ",v)
                     annList <- reduceExons(annGr)
                     ann <- as.data.frame(annList$model)
@@ -355,10 +374,10 @@ buildAnnotationDatabase <- function(organisms,sources,
                     names(ann)[1] <- "chromosome"
                     ann$chromosome <- as.character(ann$chromosome)
                     ann <- ann[order(ann$chromosome,ann$start),]
-                    nr <- .dropAnnotation(con,o,s,v,"summarized_exon")
-                    nr <- .insertContent(con,o,s,v,"summarized_exon")
+                    nr <- .dropAnnotation(con,o,s,v,"summarized_exon",versioned)
+                    nr <- .insertContent(con,o,s,v,"summarized_exon",versioned)
                     nid <- .annotationExists(con,o,s,v,"summarized_exon",
-                        out="id")
+                        versioned,out="id")
                     ann$content_id <- rep(nid,nrow(ann))
                     sfSumExon <- sf
                     sfSumExon$content_id <- rep(nid,nrow(sfSumExon))
@@ -368,10 +387,10 @@ buildAnnotationDatabase <- function(organisms,sources,
                         append=TRUE)        
                             
                     activeLength <- annList$length
-                    nr <- .dropAnnotation(con,o,s,v,"active_length")
-                    nr <- .insertContent(con,o,s,v,"active_length")
+                    nr <- .dropAnnotation(con,o,s,v,"active_length",versioned)
+                    nr <- .insertContent(con,o,s,v,"active_length",versioned)
                     nid <- .annotationExists(con,o,s,v,"active_length",
-                        out="id")
+                        versioned,out="id")
                     active <- data.frame(
                         name=names(activeLength),
                         length=activeLength,
@@ -383,22 +402,21 @@ buildAnnotationDatabase <- function(organisms,sources,
                 
                 # Then summarize the exons per transcript and write again with 
                 # type summarized_transcript_exon
-                if (.annotationExists(con,o,s,v,"summarized_transcript_exon")
-                    && !forceDownload)
+                if (.annotationExists(con,o,s,v,"summarized_transcript_exon",
+                    versioned) && !forceDownload)
                     message("Summarized exon annotation per transcript for ",o,
                         " from ",s," version ",v," has already been created ",
                         "and will be skipped.\nIf you wish to recreate it ",
                         "choose forceDownload = TRUE.")
                 else {
-                    if (!.annotationExists(con,o,s,v,"transexon")) 
+                    if (!.annotationExists(con,o,s,v,"transexon",versioned)) 
                         stop("Extended exon annotation for ",o," from ",s,
                             " version ",v," is required in order to build ",
                             "summarized exon annotation per transcript\n",
-                            "Please rerun the buildAnnotationDatabase ",
+                            "Please rerun the addAnnotation ",
                             "function with appropriate parameters.")
                 
-                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"transcript",
-                        "exon")
+                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"transexon")
                     message("Merging exons for ",o," from ",s," version ",v)
                     annList <- reduceTranscriptsExons(annGr)
                     ann <- as.data.frame(annList$model)
@@ -407,23 +425,26 @@ buildAnnotationDatabase <- function(organisms,sources,
                     ann$chromosome <- as.character(ann$chromosome)
                     ann <- ann[order(ann$chromosome,ann$start),]
                     nr <- .dropAnnotation(con,o,s,v,
-                        "summarized_transcript_exon")
-                    nr <- .insertContent(con,o,s,v,"summarized_transcript_exon")
+                        "summarized_transcript_exon",versioned)
+                    nr <- .insertContent(con,o,s,v,"summarized_transcript_exon",
+                        versioned)
                     nid <- .annotationExists(con,o,s,v,
-                        "summarized_transcript_exon",out="id")
+                        "summarized_transcript_exon",versioned,out="id")
                     ann$content_id <- rep(nid,nrow(ann))
                     sfSumTrExon <- sf
                     sfSumTrExon$content_id <- rep(nid,nrow(sfSumTrExon))
                     dbWriteTable(con,"summarized_transcript_exon",ann,
                         row.names=FALSE,append=TRUE)
                     dbWriteTable(con,"seqinfo",sfSumTrExon,row.names=FALSE,
-                        append=TRUE)        
+                        append=TRUE)
                             
                     activeLength <- annList$length
-                    nr <- .dropAnnotation(con,o,s,v,"active_trans_exon_length")
-                    nr <- .insertContent(con,o,s,v,"active_trans_exon_length")
+                    nr <- .dropAnnotation(con,o,s,v,"active_trans_exon_length",
+                        versioned)
+                    nr <- .insertContent(con,o,s,v,"active_trans_exon_length",
+                        versioned)
                     nid <- .annotationExists(con,o,s,v,
-                        "active_trans_exon_length",out="id")
+                        "active_trans_exon_length",versioned,out="id")
                     active <- data.frame(
                         name=names(activeLength),
                         length=activeLength,
@@ -440,9 +461,7 @@ buildAnnotationDatabase <- function(organisms,sources,
 }
 
 # GTF only!
-buildCustomAnnotation <- function(gtfFile,metadata,
-    db=file.path(system.file(package="sitadela"),"annotation.sqlite"),
-    rewrite=TRUE) {
+addCustomAnnotation <- function(gtfFile,metadata,db=getDbPath(),rewrite=TRUE) {
     # Check metadata
     if (is.null(metadata$organism))
         stop("An organism name must be provided with metadata!")
@@ -487,7 +506,7 @@ buildCustomAnnotation <- function(gtfFile,metadata,
     s <- tolower(metadata$source)
     o <- tolower(metadata$organism)
     v <- metadata$version
-        
+    
     # Retrieve gene annotations
     if (.annotationExists(con,o,s,v,"gene") && !rewrite)
         message("Gene annotation for ",o," from ",s," version ",v," has ",
@@ -496,11 +515,10 @@ buildCustomAnnotation <- function(gtfFile,metadata,
     else {
         message("Retrieving gene annotation for ",o," from ",s," version ",v,
             " from ",gtfFile)
-        ann <- annotationFromCustomGtf(parsed,level="gene",type="gene",
-            asdf=TRUE)
+        ann <- annotationFromCustomGtf(parsed,type="gene",asdf=TRUE)
         nr <- .dropAnnotation(con,o,s,v,"gene")
-        nr <- .insertContent(con,o,s,v,"gene",1)
-        nid <- .annotationExists(con,o,s,v,"gene",out="id")
+        nr <- .insertContent(con,o,s,v,"gene",0,1)
+        nid <- .annotationExists(con,o,s,v,"gene",FALSE,out="id")
         ann$content_id <- rep(nid,nrow(ann))
         sfGene <- .chromInfoToSeqInfoDf(metadata$chromInfo)
         sfGene$content_id <- rep(nid,nrow(sfGene))
@@ -516,11 +534,10 @@ buildCustomAnnotation <- function(gtfFile,metadata,
     else {
         message("Retrieving transcript annotation for ",o," from ",s,
             " version ",v)
-        ann <- annotationFromCustomGtf(parsed,level="transcript",type="gene",
-            asdf=TRUE)
+        ann <- annotationFromCustomGtf(parsed,type="transcript",asdf=TRUE)
         nr <- .dropAnnotation(con,o,s,v,"transcript")
-        nr <- .insertContent(con,o,s,v,"transcript",1)
-        nid <- .annotationExists(con,o,s,v,"transcript",out="id")
+        nr <- .insertContent(con,o,s,v,"transcript",0,1)
+        nid <- .annotationExists(con,o,s,v,"transcript",FALSE,out="id")
         ann$content_id <- rep(nid,nrow(ann))
         sfTranscript <- .chromInfoToSeqInfoDf(metadata$chromInfo)
         sfTranscript$content_id <- rep(nid,nrow(sfTranscript))
@@ -536,11 +553,12 @@ buildCustomAnnotation <- function(gtfFile,metadata,
     else {
         message("Retrieving summarized transcript annotation for ",o," from ",s,
             " version ",v)
-        ann <- annotationFromCustomGtf(parsed,level="transcript",type="gene",
-            summarized=TRUE,asdf=TRUE)
+        ann <- annotationFromCustomGtf(parsed,type="transcript",summarized=TRUE,
+            asdf=TRUE)
         nr <- .dropAnnotation(con,o,s,v,"summarized_transcript")
-        nr <- .insertContent(con,o,s,v,"summarized_transcript",1)
-        nid <- .annotationExists(con,o,s,v,"summarized_transcript",out="id")
+        nr <- .insertContent(con,o,s,v,"summarized_transcript",0,1)
+        nid <- .annotationExists(con,o,s,v,"summarized_transcript",FALSE,
+            out="id")
         ann$content_id <- rep(nid,nrow(ann))
         sfSumTranscript <- .chromInfoToSeqInfoDf(metadata$chromInfo)
         sfSumTranscript$content_id <- rep(nid,nrow(sfSumTranscript))
@@ -556,11 +574,11 @@ buildCustomAnnotation <- function(gtfFile,metadata,
             "recreate it choose rewrite = TRUE.")
     else {
         message("Retrieving 3' UTR annotation for ",o," from ",s," version ",v)
-        ann <- annotationFromCustomGtf(parsed,level="gene",type="utr",asdf=TRUE)
+        ann <- annotationFromCustomGtf(parsed,type="utr",asdf=TRUE)
         if (nrow(ann) > 0) {
             nr <- .dropAnnotation(con,o,s,v,"utr")
-            nr <- .insertContent(con,o,s,v,"utr",1)
-            nid <- .annotationExists(con,o,s,v,"utr",out="id")
+            nr <- .insertContent(con,o,s,v,"utr",0,1)
+            nid <- .annotationExists(con,o,s,v,"utr",FALSE,out="id")
             ann$content_id <- rep(nid,nrow(ann))
             sfUtr <- .chromInfoToSeqInfoDf(metadata$chromInfo)
             sfUtr$content_id <- rep(nid,nrow(sfUtr))
@@ -580,15 +598,15 @@ buildCustomAnnotation <- function(gtfFile,metadata,
     else {
         message("Retrieving summarized 3' UTR annotation per gene for ",o,
             " from ",s," version ",v)
-        ann <- annotationFromCustomGtf(parsed,level="gene",type="utr",
-            summarized=TRUE,asdf=TRUE)
+        ann <- annotationFromCustomGtf(parsed,type="utr",summarized=TRUE,
+            asdf=TRUE)
         
         if (nrow(ann) > 0) {
             activeLength <- attr(ann,"activeLength")
             
             nr <- .dropAnnotation(con,o,s,v,"summarized_3utr")
-            nr <- .insertContent(con,o,s,v,"summarized_3utr",1)
-            nid <- .annotationExists(con,o,s,v,"summarized_3utr",out="id")
+            nr <- .insertContent(con,o,s,v,"summarized_3utr",0,1)
+            nid <- .annotationExists(con,o,s,v,"summarized_3utr",FALSE,out="id")
             ann$content_id <- rep(nid,nrow(ann))
             sfSumUtr <- .chromInfoToSeqInfoDf(metadata$chromInfo)
             sfSumUtr$content_id <- rep(nid,nrow(sfSumUtr))
@@ -596,8 +614,9 @@ buildCustomAnnotation <- function(gtfFile,metadata,
             dbWriteTable(con,"seqinfo",sfSumUtr,row.names=FALSE,append=TRUE)
             
             nr <- .dropAnnotation(con,o,s,v,"active_utr_length")
-            nr <- .insertContent(con,o,s,v,"active_utr_length",1)
-            nid <- .annotationExists(con,o,s,v,"active_utr_length",out="id")
+            nr <- .insertContent(con,o,s,v,"active_utr_length",0,1)
+            nid <- .annotationExists(con,o,s,v,"active_utr_length",FALSE,
+                out="id")
             active <- data.frame(
                 name=names(activeLength),
                 length=activeLength,
@@ -620,15 +639,15 @@ buildCustomAnnotation <- function(gtfFile,metadata,
     else {
         message("Retrieving summarized 3' UTR annotation per transcript for ",o,
             " from ",s," version ",v)
-        ann <- annotationFromCustomGtf(parsed,level="transcript",type="utr",
-            summarized=TRUE,asdf=TRUE)
-        
+        ann <- annotationFromCustomGtf(parsed,type="transutr",summarized=TRUE,
+            asdf=TRUE)
+
         if (nrow(ann) > 0) {
             activeLength <- attr(ann,"activeLength")
             nr <- .dropAnnotation(con,o,s,v,"summarized_3utr_transcript")
-            nr <- .insertContent(con,o,s,v,"summarized_3utr_transcript",1)
+            nr <- .insertContent(con,o,s,v,"summarized_3utr_transcript",0,1)
             nid <- .annotationExists(con,o,s,v,"summarized_3utr_transcript",
-                out="id")
+                FALSE,out="id")
             ann$content_id <- rep(nid,nrow(ann))
             sfSumUtrTranscript <- .chromInfoToSeqInfoDf(metadata$chromInfo)
             sfSumUtrTranscript$content_id <- rep(nid,nrow(sfSumUtrTranscript))
@@ -638,9 +657,9 @@ buildCustomAnnotation <- function(gtfFile,metadata,
                 append=TRUE)
             
             nr <- .dropAnnotation(con,o,s,v,"active_trans_utr_length")
-            nr <- .insertContent(con,o,s,v,"active_trans_utr_length",1)
+            nr <- .insertContent(con,o,s,v,"active_trans_utr_length",0,1)
             nid <- .annotationExists(con,o,s,v,"active_trans_utr_length",
-                out="id")
+                FALSE,out="id")
             active <- data.frame(
                 name=names(activeLength),
                 length=activeLength,
@@ -661,11 +680,10 @@ buildCustomAnnotation <- function(gtfFile,metadata,
             "recreate it choose rewrite = TRUE.")
     else {
         message("Retrieving exon annotation for ",o," from ",s," version ",v)
-        ann <- annotationFromCustomGtf(parsed,level="exon",type="exon",
-            asdf=TRUE)
+        ann <- annotationFromCustomGtf(parsed,type="exon",asdf=TRUE)
         nr <- .dropAnnotation(con,o,s,v,"exon")
-        nr <- .insertContent(con,o,s,v,"exon",1)
-        nid <- .annotationExists(con,o,s,v,"exon",out="id")
+        nr <- .insertContent(con,o,s,v,"exon",0,1)
+        nid <- .annotationExists(con,o,s,v,"exon",FALSE,out="id")
         ann$content_id <- rep(nid,nrow(ann))
         sfExon <- .chromInfoToSeqInfoDf(metadata$chromInfo)
         sfExon$content_id <- rep(nid,nrow(sfExon))
@@ -681,13 +699,13 @@ buildCustomAnnotation <- function(gtfFile,metadata,
     else {
         message("Retrieving summarized exon annotation for ",o," from ",s,
             " version ",v)
-        ann <- annotationFromCustomGtf(parsed,level="gene",type="exon",
-            summarized=TRUE,asdf=TRUE)
+        ann <- annotationFromCustomGtf(parsed,type="exon",summarized=TRUE,
+            asdf=TRUE)
         activeLength <- attr(ann,"activeLength")
         
         nr <- .dropAnnotation(con,o,s,v,"summarized_exon")
-        nr <- .insertContent(con,o,s,v,"summarized_exon",1)
-        nid <- .annotationExists(con,o,s,v,"summarized_exon",out="id")
+        nr <- .insertContent(con,o,s,v,"summarized_exon",0,1)
+        nid <- .annotationExists(con,o,s,v,"summarized_exon",FALSE,out="id")
         ann$content_id <- rep(nid,nrow(ann))
         sfSumExon <- .chromInfoToSeqInfoDf(metadata$chromInfo)
         sfSumExon$content_id <- rep(nid,nrow(sfSumExon))
@@ -695,14 +713,33 @@ buildCustomAnnotation <- function(gtfFile,metadata,
         dbWriteTable(con,"seqinfo",sfSumExon,row.names=FALSE,append=TRUE)
 
         nr <- .dropAnnotation(con,o,s,v,"active_length")
-        nr <- .insertContent(con,o,s,v,"active_length",1)
-        nid <- .annotationExists(con,o,s,v,"active_length",out="id")
+        nr <- .insertContent(con,o,s,v,"active_length",0,1)
+        nid <- .annotationExists(con,o,s,v,"active_length",FALSE,out="id")
         active <- data.frame(
             name=names(activeLength),
             length=activeLength,
             content_id=rep(nid,length(activeLength))
         )
         dbWriteTable(con,"active_length",active,row.names=FALSE,append=TRUE)
+    }
+    
+    if (.annotationExists(con,o,s,v,"transexon") && !rewrite)
+        message("Extended exon annotation for ",o," from ",s," version ",v,
+            " has already been created and will be skipped.\nIf you wish to ",
+            "to recreate it choose rewrite = TRUE.")
+    else {
+        message("Retrieving extended exon annotation for ",o," from ",s,
+            " version ",v)
+        ann <- annotationFromCustomGtf(parsed,type="transexon",asdf=TRUE)
+        
+        nr <- .dropAnnotation(con,o,s,v,"transexon")
+        nr <- .insertContent(con,o,s,v,"transexon",0,1)
+        nid <- .annotationExists(con,o,s,v,"transexon",FALSE,out="id")
+        ann$content_id <- rep(nid,nrow(ann))
+        sfTransExon <- .chromInfoToSeqInfoDf(metadata$chromInfo)
+        sfTransExon$content_id <- rep(nid,nrow(sfExon))
+        dbWriteTable(con,"transexon",ann,row.names=FALSE,append=TRUE)
+        dbWriteTable(con,"seqinfo",sfTransExon,row.names=FALSE,append=TRUE)
     }
     
     # Then summarize the exons per transcript and write again with type 
@@ -715,41 +752,32 @@ buildCustomAnnotation <- function(gtfFile,metadata,
     else {
         message("Retrieving summarized transcript exon annotation for ",o,
             " from ",s," version ",v)
-    
-#~      annGr <- .loadPrebuiltAnnotation(con,o,s,v,"transcript",
-#~          "exon")
-#~      message("Merging exons for ",o," from ",s," version ",v)
-#~      annList <- reduceTranscriptsExons(annGr)
-#~      ann <- as.data.frame(annList$model)
-#~      ann <- ann[,c(1,2,3,6,7,5,8,9)]
-#~      names(ann)[1] <- "chromosome"
-#~      ann$chromosome <- as.character(ann$chromosome)
-#~      ann <- ann[order(ann$chromosome,ann$start),]
-#~      nr <- .dropAnnotation(con,o,s,v,
-#~          "summarized_transcript_exon")
-#~      nr <- .insertContent(con,o,s,v,"summarized_transcript_exon")
-#~      nid <- .annotationExists(con,o,s,v,
-#~          "summarized_transcript_exon",out="id")
-#~      ann$content_id <- rep(nid,nrow(ann))
-#~      sfSumTrExon <- sf
-#~      sfSumTrExon$content_id <- rep(nid,nrow(sfSumTrExon))
-#~      dbWriteTable(con,"summarized_transcript_exon",ann,
-#~          row.names=FALSE,append=TRUE)
-#~      dbWriteTable(con,"seqinfo",sfSumTrExon,row.names=FALSE,
-#~          append=TRUE)        
-                
-#~      activeLength <- annList$length
-#~      nr <- .dropAnnotation(con,o,s,v,"active_trans_exon_length")
-#~      nr <- .insertContent(con,o,s,v,"active_trans_exon_length")
-#~      nid <- .annotationExists(con,o,s,v,
-#~          "active_trans_exon_length",out="id")
-#~      active <- data.frame(
-#~          name=names(activeLength),
-#~          length=activeLength,
-#~          content_id=rep(nid,length(activeLength))
-#~      )
-#~      dbWriteTable(con,"active_trans_exon_length",active,
-#~          row.names=FALSE,append=TRUE)
+        ann <- annotationFromCustomGtf(parsed,type="transexon",summarized=TRUE,
+            asdf=TRUE)
+        activeLength <- attr(ann,"activeLength")
+        
+        nr <- .dropAnnotation(con,o,s,v,"summarized_transcript_exon")
+        nr <- .insertContent(con,o,s,v,"summarized_transcript_exon",0,1)
+        nid <- .annotationExists(con,o,s,v,"summarized_transcript_exon",
+            FALSE,out="id")
+        ann$content_id <- rep(nid,nrow(ann))
+        sfSumTransExon <- .chromInfoToSeqInfoDf(metadata$chromInfo)
+        sfSumTransExon$content_id <- rep(nid,nrow(sfSumTransExon))
+        dbWriteTable(con,"summarized_transcript_exon",ann,row.names=FALSE,
+            append=TRUE)
+        dbWriteTable(con,"seqinfo",sfSumTransExon,row.names=FALSE,append=TRUE)
+
+        nr <- .dropAnnotation(con,o,s,v,"active_trans_exon_length")
+        nr <- .insertContent(con,o,s,v,"active_trans_exon_length",0,1)
+        nid <- .annotationExists(con,o,s,v,"active_trans_exon_length",
+            FALSE,out="id")
+        active <- data.frame(
+            name=names(activeLength),
+            length=activeLength,
+            content_id=rep(nid,length(activeLength))
+        )
+        dbWriteTable(con,"active_trans_exon_length",active,row.names=FALSE,
+            append=TRUE)    
     }
 }
 
@@ -761,24 +789,8 @@ buildCustomAnnotation <- function(gtfFile,metadata,
 # transexon  : GRanges with (summarized) exons grouped per transcript
 # transutr   : GRanges with (summarized) 3' UTRs grouped per transcript
 # exon       : GRanges with (summarized) exons
-#
-# Directly affected functions:
-# - loadAnnotation               (x)
-# - importCustomAnnotation       (x)
-# - annotationFromCustomGtf      (x)
-# - importCustomGtf              (x)
-# - .loadPrebuiltAnnotation      (x)
-# - .loadAnnotationOnTheFly      (x)
-# - .annotationTypeFromInputArgs (x)
-# Indirectly affected functions:
-# - buildAnnotationDatabase
-# - buildCustomAnnotation
-#loadAnnotation <- function(genome,refdb,level=c("gene","transcript","exon"),
-#    type=c("gene","exon","utr"),version="auto",wtv=FALSE,
-#    db=file.path(system.file(package="sitadela"),"annotation.sqlite"),
-#    summarized=FALSE,asdf=FALSE,rc=NULL) {
 loadAnnotation <- function(genome,refdb,type=c("gene","transcript","utr",
-    "transexon","transutr","exon"),version="auto",wtv=FALSE,
+    "transutr","transexon","exon"),version="auto",wtv=FALSE,
     db=file.path(system.file(package="sitadela"),"annotation.sqlite"),
     summarized=FALSE,asdf=FALSE,rc=NULL) {
     if (!requireNamespace("RSQLite"))
@@ -786,10 +798,7 @@ loadAnnotation <- function(genome,refdb,type=c("gene","transcript","utr",
     
     genome <- tolower(genome[1])
     refdb <- tolower(refdb[1])
-    level <- level[1]
-    #.checkTextArgs("level",level,c("gene","transcript","exon"),multiarg=FALSE)
     type <- type[1]
-    #.checkTextArgs("type",type,c("gene","exon","utr"),multiarg=FALSE)
     .checkTextArgs("type",type,c("gene","transcript","utr","transexon",
         "transutr","exon"),multiarg=FALSE)
     if (version != "auto")
@@ -806,7 +815,7 @@ loadAnnotation <- function(genome,refdb,type=c("gene","transcript","utr",
         if (!.annotationExists(con,genome,refdb)) {
             warning("The requested annotation does not seem to exist in the ",
                 "database! It will be loaded on the fly.\nConsider importing ",
-                "it by using buildAnnotationDatabase.")
+                "it by using addAnnotation.")
             onTheFly <- TRUE
         }
         
@@ -816,8 +825,8 @@ loadAnnotation <- function(genome,refdb,type=c("gene","transcript","utr",
                 if (!.annotationExists(con,genome,refdb,version,
                     .annotationTypeFromInputArgs(type))) {
                     warning("The requested annotation version does not seem ",
-                        "to exist! Have you run buildAnnotationDatabase or ",
-                        "possibly mispelled? Will use newest existing version.",
+                        "to exist! Have you run addAnnotation or possibly ",
+                        "mispelled? Will use newest existing version.",
                         immediate.=TRUE)
                     version <- "auto"
                 }
@@ -828,8 +837,6 @@ loadAnnotation <- function(genome,refdb,type=c("gene","transcript","utr",
                 vers <- sort(vers,decreasing=TRUE)
                 version <- vers[1]
             }
-            #ann <- .loadPrebuiltAnnotation(con,genome,refdb,version,level,type,
-            #    summarized)
             ann <- .loadPrebuiltAnnotation(con,genome,refdb,version,type,
                 summarized)
             dbDisconnect(con)
@@ -855,8 +862,7 @@ loadAnnotation <- function(genome,refdb,type=c("gene","transcript","utr",
             && refdb %in% getSupportedRefDbs()) {
             message("Getting latest annotation on the fly for ",genome," from ",
                 refdb)
-            #ann <- .loadAnnotationOnTheFly(genome,refdb,level,type,rc)
-            ann <- .loadAnnotationOnTheFly(genome,refdb,type,rc)
+            ann <- .loadAnnotationOnTheFly(genome,refdb,type,wtv,rc)
             if (asdf) {
                 a <- attr(ann,"activeLength")
                 ann <- as.data.frame(unname(ann))
@@ -876,11 +882,8 @@ loadAnnotation <- function(genome,refdb,type=c("gene","transcript","utr",
     }
 }
 
-#importCustomAnnotation <- function(gtfFile,metadata,
-#    level=c("gene","transcript","exon"),type=c("gene","exon","utr")) {
 importCustomAnnotation <- function(gtfFile,metadata,
     type=c("gene","transcript","utr","transexon","transutr","exon")) {
-    level <- tolower(level[1])
     type <- tolower(type[1])
     # Check metadata
     if (is.null(metadata$organism)) {
@@ -932,525 +935,101 @@ importCustomAnnotation <- function(gtfFile,metadata,
         gene = {
             message("Retrieving gene annotation for ",o," from ",s," version ",
                 v," from ",gtfFile)
-            annGr <- annotationFromCustomGtf(parsed,level="gene",type="gene")
+            annGr <- annotationFromCustomGtf(parsed,type="gene")
         },
         transcript = {
             message("Retrieving transcript annotation for ",o," from ",s,
                 " version ",v," from ",gtfFile)
-            annGr <- annotationFromCustomGtf(parsed,level="transcript",
-                type="gene")
+            annGr <- annotationFromCustomGtf(parsed,type="transcript")
         },
         utr = {
             message("Retrieving summarized 3' UTR annotation per gene ","for ",
                 o," from ",s," version ",v," from ",gtfFile)
-            annGr <- annotationFromCustomGtf(parsed,level="gene",type="utr",
-                summarized=TRUE)
+            annGr <- annotationFromCustomGtf(parsed,type="utr",summarized=TRUE)
         },
         transutr = {
             message("Retrieving summarized 3' UTR annotation per ",
                 "transcript for ",o," from ",s," version ",v," from ",
                 gtfFile)
-            annGr <- annotationFromCustomGtf(parsed,level="transcript",
-                type="utr",summarized=TRUE)
+            annGr <- annotationFromCustomGtf(parsed,type="transutr",
+                summarized=TRUE)
         },
         transexon = {
             message("Retrieving summarized exon annotation per transcript ",
                 "for ",o," from ",s," version ",v," from ",gtfFile)
-            annGr <- annotationFromCustomGtf(parsed,level="transcript",
-                type="exon",summarized=TRUE)
+            annGr <- annotationFromCustomGtf(parsed,type="transexon",
+                summarized=TRUE)
         },
         exon = {
             message("Retrieving exon annotation for ",o," from ",s," version ",
                 v," from ",gtfFile)
-            annGr <- annotationFromCustomGtf(parsed,level="exon",type="exon")
+            annGr <- annotationFromCustomGtf(parsed,type="exon",summarized=TRUE)
         }
     )
-    
-#~     switch(level,
-#~         gene = {
-#~             switch(type,
-#~                 gene = {
-#~                     message("Retrieving gene annotation for ",o," from ",s,
-#~                         " version ",v," from ",gtfFile)
-#~                     annGr <- annotationFromCustomGtf(parsed,level="gene",
-#~                         type="gene")
-#~                 },
-#~                 exon = {
-#~                     message("Retrieving summarized exon annotation for ",o,
-#~                         " from ",s," version ",v," from ",gtfFile)
-#~                     annGr <- annotationFromCustomGtf(parsed,level="gene",
-#~                         type="exon",summarized=TRUE)
-#~                 },
-#~                 utr = {
-#~                     message("Retrieving summarized 3' UTR annotation per gene ",
-#~                         "for ",o," from ",s," version ",v," from ",gtfFile)
-#~                     annGr <- annotationFromCustomGtf(parsed,level="gene",
-#~                         type="utr",summarized=TRUE)
-#~                 }
-#~             )
-#~         },
-#~         transcript = {
-#~             switch(type,
-#~                 gene = {
-#~                     message("Retrieving transcript annotation for ",o," from ",
-#~                         s," version ",v," from ",gtfFile)
-#~                     annGr <- annotationFromCustomGtf(parsed,level="transcript",
-#~                         type="gene")
-#~                 },
-#~                 exon = {
-#~                     # Stub
-#~                     # TODO: "summarized_exon_by_transcript.rda"
-#~                 },
-#~                 utr = {
-#~                     message("Retrieving summarized 3' UTR annotation per ",
-#~                         "transcript for ",o," from ",s," version ",v," from ",
-#~                         gtfFile)
-#~                     annGr <- annotationFromCustomGtf(parsed,level="transcript",
-#~                         type="utr",summarized=TRUE)
-#~                 }
-#~             )
-#~         },
-#~         exon = {
-#~             switch(type,
-#~                 exon = {
-#~                     message("Retrieving exon annotation for ",o," from ",s,
-#~                         " version ",v," from ",gtfFile)
-#~                     annGr <- annotationFromCustomGtf(parsed,level="exon",
-#~                         type="exon")
-#~                 }
-#~             )
-#~         }
-#~     )
     
     return(annGr)
 }
 
-#.loadPrebuiltAnnotation <- function(con,genome,refdb,version,level,type,
-#    summarized=FALSE) {
-.loadPrebuiltAnnotation <- function(con,genome,refdb,version,type,
-    summarized=FALSE) {
-    #metaType <- .annotationTypeFromInputArgs(level,type,summarized)
-    metaType <- .annotationTypeFromInputArgs(type,summarized)
-    cid <- .annotationExists(con,genome,refdb,version,metaType,out="id")
-    if (metaType == "summarized_exon")
-        tName <- "active_length"
-    else if (metaType == "summarized_3utr")
-        tName <- "active_utr_length"
-    else if (metaType == "summarized_3utr_transcript")
-        tName <- "active_trans_utr_length"
-    else if (metaType == "summarized_transcript_exon")
-        tName <- "active_trans_exon_length"
-    cida <- .annotationExists(con,genome,refdb,version,"active_length",out="id")
-        
-    querySet <- .makeAnnotationQuerySet(metaType,cid,cida)
+removeAnnotation <- function(org,refdb,ver=NULL,db=NULL) {
+    if (missing(db) || is.null(db))
+        con <- initDatabase(getDbPath())
+    else {
+        if (!is.character(db) || !file.exists(db))
+            stop("The path to the sitadela database must be a valid path ",
+                "to an existing file! Assuming default...")
+    }
+    con <- initDatabase(db)
+    content <- getInstalledAnnotations(con)
+    orgs <- unique(as.character(content$organism))
+    sources <- unique(as.character(content$source))
+    versions <- unique(content$version)
     
-    preAnn <- dbGetQuery(con,querySet$main)
-    preAnn$`_id` <- NULL
-    preAnn$content_id <- NULL
-    ann <- GRanges(preAnn)
-    seqlevels(ann) <- unique(preAnn$chromosome)
-    
-    preSf <- dbGetQuery(con,querySet$seqinfo)
-    preSf$`_id` <- NULL
-    preSf$content_id <- NULL
-    rownames(preSf) <- as.character(preSf[,1])
-    if (genome %in% getSupportedOrganisms())
-        sfg <- getUcscOrganism(genome)
-    else
-        sfg <- genome
-    sf <- Seqinfo(seqnames=preSf[,1],seqlengths=preSf[,2],
-        isCircular=rep(FALSE,nrow(preSf)),genome=sfg)
-    
-    if (length(sf) > 0) {
-        if (length(seqlevels(ann)) != length(seqlevels(sf)))
-            # If a subset, this is enough
-            seqinfo(ann) <- sf[intersect(seqlevels(ann),seqlevels(sf))]
-        else if (!all(seqlevels(ann) == seqlevels(sf))) {
-            # Must also be sorted in the same way
-            seqlevels(ann) <- seqlevels(sf)
-            seqinfo(ann) <- sf
-        }
-        else
-            seqinfo(ann) <- sf
+    if (!(org %in% orgs)) {
+        message(org," organism was not found in the database! Doing nothing...")
+        return()
+    }
+    if (!(refdb %in% sources)) {
+        message(refdb," source was not found in the database! Doing nothing...")
+        return()
+    }
+    if (!is.null(ver) && !(ver %in% versions)) {
+        message(ver," version was not found in the database! Doing nothing...")
+        return()
     }
     
-    ann <- .nameAnnotationFromMetaType(ann,metaType)
-    
-    preActive <- NULL
-    if (!is.null(querySet$active)) {
-        preActive <- dbGetQuery(con,querySet$active)
-        preActive$`_id` <- NULL
-        preActive$content_id <- NULL
-        active <- as.integer(preActive$length)
-        names(active) <- as.character(preActive$name)
-        # FIXME: Will have to take care later of this
-        #active <- active[names(ann)]
-        attr(ann,"activeLength") <- active
-    }
-    
-    return(ann)
+    # Reopen as getInstalledAnnotations closes the connection
+    con <- initDatabase(db)
+    nr <- .dropAnnotation(con,org,refdb,ver)
+    dbDisconnect(con)
+    return(nr)
 }
 
-#.loadAnnotationOnTheFly <- function(genome,refdb,level,type,rc=NULL) {
-.loadAnnotationOnTheFly <- function(genome,refdb,type,rc=NULL) {
-    message("Retrieving genome information for ",genome," from ",refdb)
-    sf <- getSeqInfo(genome,asSeqinfo=TRUE)
-    switch(type,
-        gene = {
-            message("Retrieving latest gene annotation for ",genome," from ",
-                refdb)
-            ann <- getAnnotation(genome,"gene",refdb=refdb,rc=rc)
-            annGr <- makeGRangesFromDataFrame(
-                df=ann,
-                seqinfo=sf,
-                keep.extra.columns=TRUE,
-                seqnames.field="chromosome"
-            )
-            names(annGr) <- as.character(annGr$gene_id)
-        },
-        transcript = {
-            message("Retrieving latest transcript annotation for ",genome,
-                " from ",refdb)
-            ann <- getAnnotation(genome,"transcript",refdb=refdb,rc=rc)
-            annGr <- makeGRangesFromDataFrame(
-                df=ann,
-                seqinfo=sf,
-                keep.extra.columns=TRUE,
-                seqnames.field="chromosome"
-            )
-            names(annGr) <- as.character(annGr$transcript_id)
-        },
-        utr = {
-            message("Retrieving latest 3' UTR annotation for ",genome," from ",
-                refdb)
-            ann <- getAnnotation(genome,"utr",refdb=refdb,rc=rc)
-            tmpGr <- makeGRangesFromDataFrame(
-                df=ann,
-                seqinfo=sf,
-                keep.extra.columns=TRUE,
-                seqnames.field="chromosome"
-            )
-            message("Merging 3' UTRs for ",genome," from ",refdb)
-            annList <- reduceExons(tmpGr)
-            annGr <- annList$model
-            names(annGr) <- as.character(annGr$transcript_id)
-            activeLength <- annList$length
-            names(activeLength) <- unique(annGr$gene_id)
-            attr(annGr,"activeLength") <- activeLength
-        },
-        transexon = {
-            message("Retrieving latest transcrpit exon annotation for ",
-                genome," from ",refdb)
-            ann <- getAnnotation(genome,"transexon",refdb=refdb,rc=rc)
-            # Fill the rest...
-        },
-        transutr = {
-            message("Retrieving latest 3' UTR annotation for ",genome," from ",
-                refdb)
-            ann <- getAnnotation(genome,"utr",refdb=refdb,rc=rc)
-            annGr <- makeGRangesFromDataFrame(
-                df=ann,
-                seqinfo=sf,
-                keep.extra.columns=TRUE,
-                seqnames.field="chromosome"
-            )
-            message("Merging 3' UTRs for ",genome," from ",refdb)
-            annList <- reduceTranscriptsUtr(tmpGr)
-            annGr <- annList$model
-            names(annGr) <- as.character(annGr$transcript_id)
-            activeLength <- annList$length
-            names(activeLength) <- unique(annGr$transcript_id)
-            attr(annGr,"activeLength") <- activeLength
-        },
-        exon = {
-            message("Retrieving latest exon annotation for ",genome," from ",
-                refdb)
-            ann <- getAnnotation(genome,"exon",refdb=refdb,rc=rc)
-            annGr <- makeGRangesFromDataFrame(
-                df=ann,
-                seqinfo=sf,
-                keep.extra.columns=TRUE,
-                seqnames.field="chromosome"
-            )
-            names(annGr) <- as.character(annGr$exon_id)
-        }
-    )
-    
-#~     switch(level,
-#~         gene = {
-#~             switch(type,
-#~                 gene = {
-#~                     message("Retrieving latest gene annotation for ",genome,
-#~                         " from ",refdb)
-#~                     ann <- getAnnotation(genome,"gene",refdb=refdb,rc=rc)
-#~                     annGr <- makeGRangesFromDataFrame(
-#~                         df=ann,
-#~                         seqinfo=sf,
-#~                         keep.extra.columns=TRUE,
-#~                         seqnames.field="chromosome"
-#~                     )
-#~                     names(annGr) <- as.character(annGr$gene_id)
-#~                 },
-#~                 exon = {
-#~                     message("Retrieving latest exon annotation for ",genome,
-#~                         " from ",refdb)
-#~                     ann <- getAnnotation(genome,"exon",refdb=refdb,rc=rc)
-#~                     tmpGr <- makeGRangesFromDataFrame(
-#~                         df=ann,
-#~                         seqinfo=sf,
-#~                         keep.extra.columns=TRUE,
-#~                         seqnames.field="chromosome"
-#~                     )
-#~                     message("Merging exons for ",genome," from ",refdb)
-#~                     annList <- reduceExons(tmpGr)
-#~                     annGr <- annList$model
-#~                     names(annGr) <- as.character(annGr$exon_id)
-#~                     activeLength <- annList$length
-#~                     names(activeLength) <- unique(annGr$gene_id)
-#~                     attr(annGr,"activeLength") <- activeLength
-#~                 },
-#~                 utr = {
-#~                     message("Retrieving latest 3' UTR annotation for ",genome,
-#~                         " from ",refdb)
-#~                     ann <- getAnnotation(genome,"utr",refdb=refdb,rc=rc)
-#~                     tmpGr <- makeGRangesFromDataFrame(
-#~                         df=ann,
-#~                         seqinfo=sf,
-#~                         keep.extra.columns=TRUE,
-#~                         seqnames.field="chromosome"
-#~                     )
-#~                     message("Merging 3' UTRs for ",genome," from ",refdb)
-#~                     #annGr <- reduceTranscripts(tmpGr)
-#~                     #names(annGr) <- as.character(annGr$transcript_id)
-#~                     annList <- reduceExons(tmpGr)
-#~                     annGr <- annList$model
-#~                     names(annGr) <- as.character(annGr$transcript_id)
-#~                     activeLength <- annList$length
-#~                     names(activeLength) <- unique(annGr$gene_id)
-#~                     attr(annGr,"activeLength") <- activeLength
-#~                 }
-#~             )
-#~         },
-#~         transcript = {
-#~             switch(type,
-#~                 gene = {
-#~                     message("Retrieving latest transcript annotation for ",
-#~                         genome," from ",refdb)
-#~                     ann <- getAnnotation(genome,"transcript",refdb=refdb,rc=rc)
-#~                     annGr <- makeGRangesFromDataFrame(
-#~                         df=ann,
-#~                         seqinfo=sf,
-#~                         keep.extra.columns=TRUE,
-#~                         seqnames.field="chromosome"
-#~                     )
-#~                     names(annGr) <- as.character(annGr$transcript_id)
-#~                 },
-#~                 exon = {
-#~                     # Stub
-#~                     # TODO: "summarized_exon_by_transcript.rda"
-#~                 },
-#~                 utr = {
-#~                     message("Retrieving latest 3' UTR annotation for ",genome,
-#~                         " from ",refdb)
-#~                     ann <- getAnnotation(genome,"utr",refdb=refdb,rc=rc)
-#~                     annGr <- makeGRangesFromDataFrame(
-#~                         df=ann,
-#~                         seqinfo=sf,
-#~                         keep.extra.columns=TRUE,
-#~                         seqnames.field="chromosome"
-#~                     )
-#~                     message("Merging 3' UTRs for ",genome," from ",refdb)
-#~                     #annGr <- reduceTranscriptsUtr(annGr)
-#~                     #names(annGr) <- as.character(annGr$transcript_id)
-#~                     annList <- reduceTranscriptsUtr(tmpGr)
-#~                     annGr <- annList$model
-#~                     names(annGr) <- as.character(annGr$transcript_id)
-#~                     activeLength <- annList$length
-#~                     names(activeLength) <- unique(annGr$transcript_id)
-#~                     attr(annGr,"activeLength") <- activeLength
-#~                 }
-#~             )
-#~         },
-#~         exon = {
-#~             switch(type,
-#~                 exon = {
-#~                     message("Retrieving latest exon annotation for ",genome,
-#~                         " from ",refdb)
-#~                     ann <- getAnnotation(genome,"exon",refdb=refdb,rc=rc)
-#~                     annGr <- makeGRangesFromDataFrame(
-#~                         df=ann,
-#~                         seqinfo=sf,
-#~                         keep.extra.columns=TRUE,
-#~                         seqnames.field="chromosome"
-#~                     )
-#~                     names(annGr) <- as.character(annGr$exon_id)
-#~                 }
-#~             )
-#~         }
-#~     )
-    
-    return(annGr)
-}
-
-.nameAnnotationFromMetaType <- function(ann,type) {
-    switch(type,
-        gene = {
-            names(ann) <- as.character(ann$gene_id)
-        },
-        summarized_exon = {
-            names(ann) <- as.character(ann$exon_id)
-        },
-        exon = {
-            names(ann) <- as.character(ann$exon_id)
-        },
-        summarized_3utr = {
-            names(ann) <- as.character(ann$transcript_id)
-        },
-        utr = {
-            names(ann) <- as.character(ann$transcript_id)
-        },
-        summarized_transcript = {
-            names(ann) <- as.character(ann$transcript_id)
-        },
-        transcript = {
-            names(ann) <- as.character(ann$transcript_id)
-        },
-        summarized_3utr_transcript = {
-            names(ann) <- as.character(ann$transcript_id)
-        }
-    )
-    return(ann)
-}
-
-#.annotationTypeFromInputArgs <- function(level,type,summarized=FALSE) {
-.annotationTypeFromInputArgs <- function(type,summarized=FALSE) {
-    switch(type,
-        gene = {
-            return("gene")
-        },
-        transcript = {
-            if (summarized)
-                return("summarized_transcript")
-            else
-                return("transcript")
-        },
-        utr = {
-            if (summarized)
-                return("summarized_3utr")
-            else
-                return("utr")
-        },
-        transexon = {
-            if (summarized)
-                return("summarized_transcript_exon")
-            else
-                return("transexon")
-        },
-        transutr = {
-            if (summarized)
-                return("summarized_3utr_transcript")
-            else
-                return("utr")
-        },
-        exon = {
-            if (summarized)
-                return("summarized_exon")
-            else
-                return("exon")
-        },
-    )
-    
-    #switch(level,
-    #    gene = {
-    #        switch(type,
-    #            gene = {
-    #                return("gene")
-    #            },
-    #            exon = {
-    #                if (summarized)
-    #                    return("summarized_exon")
-    #                else
-    #                    return("exon")
-    #            },
-    #            utr = {
-    #                if (summarized)
-    #                    return("summarized_3utr")
-    #                else
-    #                    return("utr")
-    #            }
-    #        )
-    #    },
-    #    transcript = {
-    #        switch(type,
-    #            gene = {
-    #                if (summarized)
-    #                    return("summarized_transcript")
-    #                else
-    #                    return("transcript")
-    #            },
-    #            exon = {
-    #                if (summarized)
-    #                    return("summarized_transcript_exon")
-    #                else
-    #                    return("transexon")
-    #            },
-    #            utr = {
-    #                if (summarized)
-    #                    return("summarized_3utr_transcript")
-    #                else
-    #                    return("utr")
-    #            }
-    #        )
-    #    },
-    #    exon = {
-    #        switch(type,
-    #            gene = {
-    #                if (summarized)
-    #                    return("summarized_exon")
-    #                else
-    #                    return("exon")
-    #            },
-    #            exon = {
-    #                if (summarized)
-    #                    return("summarized_exon")
-    #                else
-    #                    return("exon")
-    #            },
-    #            utr = {
-    #                return("utr")
-    #            }
-    #        )
-    #    }
-    #)
-}
-
-.validateDbCon <- function(obj) {
-    # obj can be an already opened connection or the db file or missing. In the
-    # latter case, the function looks at the package filesystem location
-    if (is.null(obj)) {
-        db <- file.path(system.file(package="sitadela"),"annotation.sqlite")
-        drv <- dbDriver("SQLite")
-        con <- tryCatch(dbConnect(drv,dbname=db),error=function(e) {
-            message("Caught error: ",e)
-            stop("Have you constructed the metaseqR annotation database?")
-        },finally="")
-    }
-    if (file.exists(obj)) {
-        drv <- dbDriver("SQLite")
-        con <- tryCatch(dbConnect(drv,dbname=obj),error=function(e) {
-            message("Caught error: ",e)
-            stop("Is obj an SQLite database?")
-        },finally="")
-    }
-    else if (is(obj,"SQLiteConnection"))
-        con <- obj
-    return(con)
+.dropAnnotation <- function(con,o,s,v,t,h) {
+    # At least organism must exist
+    if (missing(o))
+        stop("At least an organism name must be provided for deletion!")
+    # A basic deletion query based on organism. Since the content table is
+    # connected with the rest through foreing keys, deletion from there should
+    # be enough.
+    query <- paste("DELETE FROM content WHERE organism='",o,"'",sep="")
+    # Augment according to given arguments.
+    if (!missing(s))
+        query <- paste(query," AND source='",s,"'",sep="")
+    if (!missing(v))
+        query <- paste(query," AND version=",v,sep="")
+    if (!missing(t))
+        query <- paste(query," AND type='",t,"'",sep="")
+    if (!missing(h))
+        query <- paste(query," AND has_tv=",h,sep="")
+    # Execute
+    nr <- dbExecute(con,query)
+    return(nr)
 }
 
 getInstalledAnnotations <- function(obj=NULL) {
     con <- .validateDbCon(obj)
     content <- .browseContent(con)
-    dbDisconnect(con)   
+    dbDisconnect(con)
     return(content[,-1])
 }
 
@@ -1764,8 +1343,8 @@ getUcscUtr <- function(org,refdb="ucsc",versioned=FALSE,.rmysql=FALSE) {
         tableUtr <- getUcscTableNameUtr(org,refdb) # Need one table
         message("  Retrieving table ",tableUtr," for 3'UTR annotation ",
             "generation from ",refdb," for ",org)
-        download.file(paste(httpBase,tableUtr,sep=""),file.path(tempdir(),
-            paste(tableUtr,".txt.gz",sep="")),quiet=TRUE)
+        download.file(paste(httpBase,paste(tableUtr,".txt.gz",sep=""),sep=""),
+            file.path(tempdir(),paste(tableUtr,".txt.gz",sep="")),quiet=TRUE)
     }
     
     # Do the conversion stuff. AS there is no easy way to check if genePredToGtf
@@ -2020,54 +1599,476 @@ getChromInfo <- function(org,
     return(chromInfo)
 }
 
-.getHost <- function(org,ver=NULL) {
-    if (!requireNamespace("biomaRt"))
-        stop("The Bioconductor package biomaRt is required to proceed!")
-    
-    org <- tolower(org[1])
-    .checkTextArgs("org",org,getSupportedOrganisms(),multiarg=FALSE)
-    if (!is.null(ver) 
-        && (!is.numeric(ver) || is.na(suppressWarnings(as.numeric(ver)))))
-        stop("ver must be numeric or coercible to numeric if not NULL!")
-        
-    if (org == "tair10")
-        return("plants.ensembl.org")
-    
-    aver <- .getUcscToEnsembl(org)
-    if (!is.null(ver) && !(ver %in% aver)) {
-        warning("Version ",ver," not available/existing for ",org,"! Will ",
-            "use the latest available version...",immediate.=TRUE)
-        ver <- NULL
-    }
-    
-    if (is.null(ver)) {
-        u2e <- .ucscToEnsembl()
-        vers <- u2e[[org]]
-        ver <- vers[length(vers)]
-    }
-    
-    ea <- biomaRt::listEnsemblArchives()
-    i <- grep(as.character(ver),ea[,"version"])
-    if (length(i) > 0) {
-        if (ea[i,"current_release"] == "*")
-            return("http://www.ensembl.org")
-        else
-            return(ea[i,"url"])
-    }
+getSupportedRefDbs <- function() {
+    return(c("ensembl","ucsc","refseq","ncbi"))
+}
+
+getSupportedOrganisms <- function() {
+    return(c("hg18","hg19","hg38","mm9","mm10","rn5","rn6","dm3","dm6",
+        "danrer7","danrer10","danrer11","pantro4","pantro5",#"pantro6",
+        "susscr3","susscr11","equcab2","equcab3","tair10"))
+}
+
+getSupportedUcscDbs <- function() {
+    return(c("ucsc","refseq","ncbi"))
+}
+
+setDbPath <- function(db=NULL) {
+    if (is.null(db))
+        db <- .DFLT_DBPATH
     else {
-        warning("Version ",ver," not found in biomaRt archives for ",org,"! ",
-            "Will use the latest available version for ",org,"...",
-            immediate.=TRUE)
-        u2e <- .ucscToEnsembl()
-        vers <- u2e[[org]]
-        for (v in rev(vers)) {
-            newi <- grep(as.character(v),ea[,"version"])
-            if (length(newi) > 0)
-                return(ea[newi,"url"])
+        if (!is.character(db)) {
+            warning("The path to the sitadela database must be a valid path ",
+                "to a file which\nwill be created if not existing! Assuming ",
+                "default...",immediate..=TRUE)
+            db <- .DFLT_DBPATH
         }
     }
-    # If everything fails...
-    return(NULL)
+    
+    if (is.null(getOption("BioC"))) {
+        BioC <- list()
+        class(BioC) <- "BioCOptions"
+        options("BioC"=BioC)
+    }
+
+    BioC <- getOption("BioC")
+    BioC$sitadela <- db
+    options("BioC"=BioC)
+}
+
+getDbPath <- function() {
+    db <- getOption("BioC")$sitadela
+    if (!is.null(db))
+        return(db)
+    else
+        return(.DFLT_DBPATH)
+}
+
+importCustomGtf <- function(gtfFile,type=c("gene","transcript","utr",
+    "transexon","transutr","exon")) {
+    if (!requireNamespace("GenomicFeatures"))
+        stop("Bioconductor package GenomicFeatures is required to build ",
+            "custom annotation!")
+        
+    # Some argument checking
+    type <- type[1]
+    .checkTextArgs("type",type,c("gene","transcript","utr","transexon",
+        "transutr","exon"),multiarg=FALSE)
+    
+    # Import the GTF with rtracklayer to create a map of available metadata
+    message("  Importing GTF ",gtfFile," as GTF to make id map")
+    desiredColumns <- c("type","gene_id","transcript_id","exon_id",
+        "gene_name","gene_biotype")
+    gr <- import(gtfFile,format="gtf",colnames=desiredColumns,
+        feature.type=.GFF_FEATURE_TYPES)
+    grdf <- as.data.frame(gr)
+    grdf <- grdf[grdf$type=="exon",]
+
+    # Need to map gene ids to names and biotypes. We need a collapsed 
+    # structure exon_id - transcript_id - gene_id - gane_name - biotype
+    message("  Making id map")
+    map <- .makeIdMap(grdf)
+    
+    message("  Importing GTF ",gtfFile," as TxDb")
+    txdb <- suppressWarnings(makeTxDbFromGFF(gtfFile))
+    
+    switch(type,
+        gene = {
+            return(.makeGeneGeneFromTxDb(txdb,map))
+        },
+        transcript = {
+            return(.makeTranscriptGeneFromTxDb(txdb,map))
+        },
+        utr = {
+            return(.makeGeneUtrFromTxDb(txdb,map))
+        },
+        transexon = {
+            # Stub
+        },
+        transutr = {
+            return(.makeTranscriptUtrFromTxDb(txdb,map))
+        },
+        exon = {
+            return(.makeExonExonFromTxDb(txdb,map))
+        }
+    )
+}
+
+# parsed <- parseCustomGtf(gffFile)
+parseCustomGtf <- function(gtfFile) {
+    if (!requireNamespace("GenomicFeatures"))
+        stop("Bioconductor package GenomicFeatures is required to parse ",
+            "custom GTF file!")
+    
+    # Import the GTF with rtracklayer to create a map of available metadata
+    message("  Importing GTF ",gtfFile," as GTF to make id map")
+    desiredColumns <- c("type","gene_id","transcript_id","exon_id",
+        "gene_name","gene_biotype")
+    # Let it recognize automatically GFF/GTF
+    gr <- import(gtfFile,colnames=desiredColumns,
+        feature.type=.GFF_FEATURE_TYPES)
+    grdf <- as.data.frame(gr)
+    grdf <- grdf[grdf$type=="exon",]
+
+    # Need to map gene ids to names and biotypes. We need a collapsed 
+    # structure exon_id - transcript_id - gene_id - gane_name - biotype
+    message("  Making id map")
+    map <- .makeIdMap(grdf)
+    
+    message("  Importing GTF ",gtfFile," as TxDb")
+    txdb <- suppressWarnings(makeTxDbFromGFF(gtfFile))
+    
+    return(list(txdb=txdb,map=map))
+}
+
+annotationFromCustomGtf <- function(parsed,type=c("gene","transcript","utr",
+    "transexon","transutr","exon"),summarized=FALSE,asdf=FALSE) {
+    # Some argument checking
+    if (!is.logical(summarized))
+        stop("summarized must be TRUE or FALSE")
+    type <- type[1]
+    .checkTextArgs("type",type,c("gene","transcript","utr","transexon",
+        "transutr","exon"),multiarg=FALSE)
+    
+    txdb <- parsed$txdb
+    map <- parsed$map
+    
+    switch(type,
+        gene = {
+            return(.makeGeneGeneFromTxDb(txdb,map,asdf))
+        },
+        transcript = {
+            if (summarized)
+                return(.makeSumTranscriptGeneFromTxDb(txdb,map,asdf))
+            else
+                return(.makeTranscriptGeneFromTxDb(txdb,map,asdf))
+        },
+        utr = {
+            if (summarized)
+                return(.makeSumGeneUtrFromTxDb(txdb,map,asdf))
+            else
+                return(.makeGeneUtrFromTxDb(txdb,map,asdf))
+        },
+        transexon = {
+            if (summarized)
+                return(.makeSumTranscriptExonFromTxDb(txdb,map,asdf))
+            else
+                return(.makeTranscriptExonFromTxDb(txdb,map,asdf))
+        },
+        transutr = {
+            if (summarized)
+                return(.makeSumTranscriptUtrFromTxDb(txdb,map,asdf))
+            else
+                return(.makeTranscriptUtrFromTxDb(txdb,map,asdf))
+        },
+        exon = {
+            if (summarized)
+                return(.makeSumGeneExonFromTxDb(txdb,map,asdf))
+            else
+                return(.makeExonExonFromTxDb(txdb,map,asdf))
+        }
+    )
+}
+
+cmclapply <- function(...,rc) {
+    if (suppressWarnings(!requireNamespace("parallel")) 
+        || .Platform$OS.type!="unix")
+        m <- FALSE
+    else {
+        m <- TRUE
+        ncores <- parallel::detectCores()
+        if (ncores==1) 
+            m <- FALSE
+        else {
+            if (!missing(rc) && !is.null(rc))
+                ncores <- ceiling(rc*ncores)
+            else 
+                m <- FALSE
+        }
+    }
+    if (m)
+        return(mclapply(...,mc.cores=ncores,mc.set.seed=FALSE))
+    else
+        return(lapply(...))
+}
+
+.loadPrebuiltAnnotation <- function(con,genome,refdb,version,type,
+    summarized=FALSE) {
+    metaType <- .annotationTypeFromInputArgs(type,summarized)
+    cid <- .annotationExists(con,genome,refdb,version,metaType,out="id")
+    if (metaType == "summarized_exon")
+        tName <- "active_length"
+    else if (metaType == "summarized_3utr")
+        tName <- "active_utr_length"
+    else if (metaType == "summarized_3utr_transcript")
+        tName <- "active_trans_utr_length"
+    else if (metaType == "summarized_transcript_exon")
+        tName <- "active_trans_exon_length"
+    cida <- .annotationExists(con,genome,refdb,version,"active_length",out="id")
+        
+    querySet <- .makeAnnotationQuerySet(metaType,cid,cida)
+    
+    preAnn <- dbGetQuery(con,querySet$main)
+    preAnn$`_id` <- NULL
+    preAnn$content_id <- NULL
+    ann <- GRanges(preAnn)
+    seqlevels(ann) <- unique(preAnn$chromosome)
+    
+    preSf <- dbGetQuery(con,querySet$seqinfo)
+    preSf$`_id` <- NULL
+    preSf$content_id <- NULL
+    rownames(preSf) <- as.character(preSf[,1])
+    if (genome %in% getSupportedOrganisms())
+        sfg <- getUcscOrganism(genome)
+    else
+        sfg <- genome
+    sf <- Seqinfo(seqnames=preSf[,1],seqlengths=preSf[,2],
+        isCircular=rep(FALSE,nrow(preSf)),genome=sfg)
+    
+    if (length(sf) > 0) {
+        if (length(seqlevels(ann)) != length(seqlevels(sf)))
+            # If a subset, this is enough
+            seqinfo(ann) <- sf[intersect(seqlevels(ann),seqlevels(sf))]
+        else if (!all(seqlevels(ann) == seqlevels(sf))) {
+            # Must also be sorted in the same way
+            seqlevels(ann) <- seqlevels(sf)
+            seqinfo(ann) <- sf
+        }
+        else
+            seqinfo(ann) <- sf
+    }
+    
+    ann <- .nameAnnotationFromMetaType(ann,metaType)
+    
+    preActive <- NULL
+    if (!is.null(querySet$active)) {
+        preActive <- dbGetQuery(con,querySet$active)
+        preActive$`_id` <- NULL
+        preActive$content_id <- NULL
+        active <- as.integer(preActive$length)
+        names(active) <- as.character(preActive$name)
+        # FIXME: Will have to take care later of this
+        #active <- active[names(ann)]
+        attr(ann,"activeLength") <- active
+    }
+    
+    return(ann)
+}
+
+.loadAnnotationOnTheFly <- function(genome,refdb,type,versioned=FALSE,rc=NULL) {
+    message("Retrieving genome information for ",genome," from ",refdb)
+    sf <- getSeqInfo(genome,asSeqinfo=TRUE)
+    switch(type,
+        gene = {
+            message("Retrieving latest gene annotation for ",genome," from ",
+                refdb)
+            ann <- getAnnotation(genome,"gene",refdb=refdb,tv=versioned,rc=rc)
+            annGr <- makeGRangesFromDataFrame(
+                df=ann,
+                seqinfo=sf,
+                keep.extra.columns=TRUE,
+                seqnames.field="chromosome"
+            )
+            names(annGr) <- as.character(annGr$gene_id)
+        },
+        transcript = {
+            message("Retrieving latest transcript annotation for ",genome,
+                " from ",refdb)
+            ann <- getAnnotation(genome,"transcript",refdb=refdb,tv=versioned,
+                rc=rc)
+            annGr <- makeGRangesFromDataFrame(
+                df=ann,
+                seqinfo=sf,
+                keep.extra.columns=TRUE,
+                seqnames.field="chromosome"
+            )
+            names(annGr) <- as.character(annGr$transcript_id)
+        },
+        utr = {
+            message("Retrieving latest 3' UTR annotation for ",genome," from ",
+                refdb)
+            ann <- getAnnotation(genome,"utr",refdb=refdb,tv=versioned,rc=rc)
+            tmpGr <- makeGRangesFromDataFrame(
+                df=ann,
+                seqinfo=sf,
+                keep.extra.columns=TRUE,
+                seqnames.field="chromosome"
+            )
+            message("Merging 3' UTRs for ",genome," from ",refdb)
+            annList <- reduceExons(tmpGr)
+            annGr <- annList$model
+            names(annGr) <- as.character(annGr$transcript_id)
+            activeLength <- annList$length
+            names(activeLength) <- unique(annGr$gene_id)
+            attr(annGr,"activeLength") <- activeLength
+        },
+        transexon = {
+            message("Retrieving latest transcrpit exon annotation for ",
+                genome," from ",refdb)
+            ann <- getAnnotation(genome,"transexon",refdb=refdb,tv=versioned,
+                rc=rc)
+            annGr <- makeGRangesFromDataFrame(
+                df=ann,
+                seqinfo=sf,
+                keep.extra.columns=TRUE,
+                seqnames.field="chromosome"
+            )
+            names(annGr) <- as.character(annGr$transcript_id)
+        },
+        transutr = {
+            message("Retrieving latest 3' UTR annotation for ",genome," from ",
+                refdb)
+            ann <- getAnnotation(genome,"utr",refdb=refdb,tv=versioned,rc=rc)
+            annGr <- makeGRangesFromDataFrame(
+                df=ann,
+                seqinfo=sf,
+                keep.extra.columns=TRUE,
+                seqnames.field="chromosome"
+            )
+            message("Merging 3' UTRs for ",genome," from ",refdb)
+            annList <- reduceTranscriptsUtr(tmpGr)
+            annGr <- annList$model
+            names(annGr) <- as.character(annGr$transcript_id)
+            activeLength <- annList$length
+            names(activeLength) <- unique(annGr$transcript_id)
+            attr(annGr,"activeLength") <- activeLength
+        },
+        exon = {
+            message("Retrieving latest exon annotation for ",genome," from ",
+                refdb)
+            ann <- getAnnotation(genome,"exon",refdb=refdb,tv=versioned,rc=rc)
+            annGr <- makeGRangesFromDataFrame(
+                df=ann,
+                seqinfo=sf,
+                keep.extra.columns=TRUE,
+                seqnames.field="chromosome"
+            )
+            names(annGr) <- as.character(annGr$exon_id)
+        }
+    )
+
+    return(annGr)
+}
+
+.nameAnnotationFromMetaType <- function(ann,type) {
+    switch(type,
+        gene = {
+            names(ann) <- as.character(ann$gene_id)
+        },
+        summarized_exon = {
+            names(ann) <- as.character(ann$exon_id)
+        },
+        exon = {
+            names(ann) <- as.character(ann$exon_id)
+        },
+        summarized_3utr = {
+            names(ann) <- as.character(ann$transcript_id)
+        },
+        utr = {
+            names(ann) <- as.character(ann$transcript_id)
+        },
+        summarized_transcript = {
+            names(ann) <- as.character(ann$transcript_id)
+        },
+        transcript = {
+            names(ann) <- as.character(ann$transcript_id)
+        },
+        summarized_3utr_transcript = {
+            names(ann) <- as.character(ann$transcript_id)
+        }
+    )
+    return(ann)
+}
+
+.annotationTypeFromInputArgs <- function(type,summarized=FALSE) {
+    switch(type,
+        gene = {
+            return("gene")
+        },
+        transcript = {
+            if (summarized)
+                return("summarized_transcript")
+            else
+                return("transcript")
+        },
+        utr = {
+            if (summarized)
+                return("summarized_3utr")
+            else
+                return("utr")
+        },
+        transexon = {
+            if (summarized)
+                return("summarized_transcript_exon")
+            else
+                return("transexon")
+        },
+        transutr = {
+            if (summarized)
+                return("summarized_3utr_transcript")
+            else
+                return("utr")
+        },
+        exon = {
+            if (summarized)
+                return("summarized_exon")
+            else
+                return("exon")
+        }
+    )
+}
+
+.chromInfoFromBAM <- function(bam) {
+    # Danger of including non-canonical chromosomes
+    b <- scanBamHeader(bam)
+    ci <- as.data.frame(b[[bam]]$targets)
+    names(ci) <- "length"
+    return(ci)
+}
+
+.chromInfoFromSeqinfo <- function(sf) {
+    sf <- as.data.frame(sf)
+    sf <- sf[,1,drop=FALSE]
+    names(sf) <- "length"
+    return(sf)
+}
+
+.chromInfoToSeqInfoDf <- function(ci,o="custom",circ=FALSE,asSeqinfo=FALSE) {
+    if (asSeqinfo)
+        return(Seqinfo(seqnames=rownames(ci),seqlengths=ci[,1],
+            isCircular=rep(circ,nrow(ci)),genome=o))
+    else
+        return(data.frame(chromosome=rownames(ci),length=as.integer(ci[,1])))
+}
+
+.chromInfoWrapperGID <- function(o) {
+    if (packageVersion("GenomeInfoDb")>=1.23)
+        return(GenomeInfoDb::getChromInfoFromUCSC(o))
+    else
+        return(GenomeInfoDb::fetchExtendedChromInfoFromUCSC(o))
+}
+
+.validateDbCon <- function(obj) {
+    # obj can be an already opened connection or the db file or missing. In the
+    # latter case, the function looks at the package filesystem location
+    if (missing(obj) || is.null(obj)) {
+        db <-  getDbPath()
+        drv <- dbDriver("SQLite")
+        con <- tryCatch(dbConnect(drv,dbname=db),error=function(e) {
+            message("Caught error: ",e)
+            stop("Have you constructed the metaseqR annotation database?")
+        },finally="")
+    }
+    if (is.character(obj) && file.exists(obj)) {
+        drv <- dbDriver("SQLite")
+        con <- tryCatch(dbConnect(drv,dbname=obj),error=function(e) {
+            message("Caught error: ",e)
+            stop("Is obj an SQLite database?")
+        },finally="")
+    }
+    else if (is(obj,"SQLiteConnection"))
+        con <- obj
+    return(con)
 }
 
 .getValidChrs <- function(org) {
@@ -2221,1305 +2222,4 @@ getChromInfo <- function(org,
         return(.getValidChrs(org))
 }
 
-getSupportedRefDbs <- function() {
-    return(c("ensembl","ucsc","refseq","ncbi"))
-}
-
-getSupportedOrganisms <- function() {
-    return(c("hg18","hg19","hg38","mm9","mm10","rn5","rn6","dm3","dm6",
-        "danrer7","danrer10","danrer11","pantro4","pantro5",#"pantro6",
-        "susscr3","susscr11","equcab2","equcab3","tair10"))
-}
-
-getSupportedUcscDbs <- function() {
-    return(c("ucsc","refseq","ncbi"))
-}
-
-#importCustomGtf <- function(gtfFile,level=c("gene","transcript","exon"),
-#    type=c("gene","exon","utr")) {
-importCustomGtf <- function(gtfFile,type=c("gene","transcript","utr",
-    "transexon","transutr","exon")) {
-    if (!requireNamespace("GenomicFeatures"))
-        stop("Bioconductor package GenomicFeatures is required to build ",
-            "custom annotation!")
-        
-    # Some argument checking
-    #level <- level[1]
-    type <- type[1]
-    #.checkTextArgs("level",level,c("gene","transcript","exon"),multiarg=FALSE)
-    #.checkTextArgs("type",type,c("gene","exon","utr"),multiarg=FALSE)
-    .checkTextArgs("type",type,c("gene","transcript","utr","transexon",
-        "transutr","exon"),multiarg=FALSE)
-    
-    # Import the GTF with rtracklayer to create a map of available metadata
-    message("  Importing GTF ",gtfFile," as GTF to make id map")
-    desiredColumns <- c("type","gene_id","transcript_id","exon_id",
-        "gene_name","gene_biotype")
-    gr <- import(gtfFile,format="gtf",colnames=desiredColumns,
-        feature.type=.GFF_FEATURE_TYPES)
-    grdf <- as.data.frame(gr)
-    grdf <- grdf[grdf$type=="exon",]
-
-    # Need to map gene ids to names and biotypes. We need a collapsed 
-    # structure exon_id - transcript_id - gene_id - gane_name - biotype
-    message("  Making id map")
-    map <- .makeIdMap(grdf)
-    
-    message("  Importing GTF ",gtfFile," as TxDb")
-    txdb <- suppressWarnings(makeTxDbFromGFF(gtfFile))
-    
-    switch(type,
-        gene = {
-            return(.makeGeneGeneFromTxDb(txdb,map))
-        },
-        transcript = {
-            return(.makeTranscriptGeneFromTxDb(txdb,map))
-        },
-        utr = {
-            return(.makeGeneUtrFromTxDb(txdb,map))
-        },
-        transexon = {
-            # Stub
-        },
-        transutr = {
-            return(.makeTranscriptUtrFromTxDb(txdb,map))
-        },
-        exon = {
-            return(.makeExonExonFromTxDb(txdb,map))
-        }
-    )
-    
-#~     switch(level,
-#~         gene = {
-#~             switch(type,
-#~                 gene = {
-#~                     return(.makeGeneGeneFromTxDb(txdb,map))
-#~                 },
-#~                 exon = {
-#~                     return(.makeGeneExonFromTxDb(txdb,map))
-#~                 },
-#~                 utr = {
-#~                     return(.makeGeneUtrFromTxDb(txdb,map))
-#~                 }
-#~             )
-#~         },
-#~         transcript = {
-#~             switch(type,
-#~                 gene = {
-#~                     return(.makeTranscriptGeneFromTxDb(txdb,map))
-#~                 },
-#~                 exon = {
-#~                     # Stub
-#~                 },
-#~                 utr = {
-#~                     return(.makeTranscriptUtrFromTxDb(txdb,map))
-#~                 }
-#~             )
-#~         },
-#~         exon = {
-#~             switch(type,
-#~                 exon = {
-#~                     return(.makeExonExonFromTxDb(txdb,map))
-#~                 }
-#~             )
-#~         }
-#~     )
-}
-
-# parsed <- parseCustomGtf(gffFile)
-parseCustomGtf <- function(gtfFile) {
-    if (!requireNamespace("GenomicFeatures"))
-        stop("Bioconductor package GenomicFeatures is required to parse ",
-            "custom GTF file!")
-    
-    # Import the GTF with rtracklayer to create a map of available metadata
-    message("  Importing GTF ",gtfFile," as GTF to make id map")
-    desiredColumns <- c("type","gene_id","transcript_id","exon_id",
-        "gene_name","gene_biotype")
-    # Let it recognize automatically GFF/GTF
-    gr <- import(gtfFile,colnames=desiredColumns,
-        feature.type=.GFF_FEATURE_TYPES)
-    grdf <- as.data.frame(gr)
-    grdf <- grdf[grdf$type=="exon",]
-
-    # Need to map gene ids to names and biotypes. We need a collapsed 
-    # structure exon_id - transcript_id - gene_id - gane_name - biotype
-    message("  Making id map")
-    map <- .makeIdMap(grdf)
-    
-    message("  Importing GTF ",gtfFile," as TxDb")
-    txdb <- suppressWarnings(makeTxDbFromGFF(gtfFile))
-    
-    return(list(txdb=txdb,map=map))
-}
-
-#annotationFromCustomGtf <- function(parsed,level=c("gene","transcript","exon"),
-#    type=c("gene","exon","utr"),summarized=FALSE,asdf=FALSE) {
-annotationFromCustomGtf <- function(parsed,type=c("gene","transcript","utr",
-    "transexon","transutr","exon"),summarized=FALSE,asdf=FALSE) {
-    # Some argument checking
-    if (!is.logical(summarized))
-        stop("summarized must be TRUE or FALSE")
-    #level <- level[1]
-    type <- type[1]
-    #.checkTextArgs("level",level,c("gene","transcript","exon"),multiarg=FALSE)
-    #.checkTextArgs("type",type,c("gene","exon","utr"),multiarg=FALSE)
-    .checkTextArgs("type",type,c("gene","transcript","utr","transexon",
-        "transutr","exon"),multiarg=FALSE)
-    
-    txdb <- parsed$txdb
-    map <- parsed$map
-    
-    switch(type,
-        gene = {
-            return(.makeGeneGeneFromTxDb(txdb,map,asdf))
-        },
-        transcript = {
-            if (summarized)
-                return(.makeSumTranscriptGeneFromTxDb(txdb,map,asdf))
-            else
-                return(.makeTranscriptGeneFromTxDb(txdb,map,asdf))
-        },
-        utr = {
-            if (summarized)
-                return(.makeSumGeneUtrFromTxDb(txdb,map,asdf))
-            else
-                return(.makeGeneUtrFromTxDb(txdb,map,asdf))
-        },
-        transexon = {
-            if (summarized)
-                return(.makeSumTranscriptExonFromTxDb(txdb,map,asdf))
-            else
-                return(.makeTranscriptExonFromTxDb(txdb,map,asdf))
-        },
-        transutr = {
-            if (summarized)
-                return(.makeSumTranscriptUtrFromTxDb(txdb,map,asdf))
-            else
-                return(.makeTranscriptUtrFromTxDb(txdb,map,asdf))
-        },
-        exon = {
-            if (summarized)
-                return(.makeSumGeneExonFromTxDb(txdb,map,asdf))
-            else
-                return(.makeExonExonFromTxDb(txdb,map,asdf))
-        }
-    )
-    
-#~     switch(level,
-#~         gene = {
-#~             switch(type,
-#~                 gene = {
-#~                     return(.makeGeneGeneFromTxDb(txdb,map,asdf))
-#~                 },
-#~                 exon = {
-#~                     if (summarized)
-#~                         return(.makeSumGeneExonFromTxDb(txdb,map,asdf))
-#~                     else
-#~                         return(.makeGeneExonFromTxDb(txdb,map,asdf))
-#~                 },
-#~                 utr = {
-#~                     if (summarized)
-#~                         return(.makeSumGeneUtrFromTxDb(txdb,map,asdf))
-#~                     else
-#~                         return(.makeGeneUtrFromTxDb(txdb,map,asdf))
-#~                 }
-#~             )
-#~         },
-#~         transcript = {
-#~             switch(type,
-#~                 gene = {
-#~                     if (summarized)
-#~                         return(.makeSumTranscriptGeneFromTxDb(txdb,map,asdf))
-#~                     else
-#~                         return(.makeTranscriptGeneFromTxDb(txdb,map,asdf))
-#~                 },
-#~                 exon = {
-#~                     # Stub
-#~                 },
-#~                 utr = {
-#~                     if (summarized)
-#~                         return(.makeSumTranscriptUtrFromTxDb(txdb,map,asdf))
-#~                     else
-#~                         return(.makeTranscriptUtrFromTxDb(txdb,map,asdf))
-#~                 }
-#~             )
-#~         },
-#~         exon = {
-#~             switch(type,
-#~                 exon = {
-#~                     return(.makeExonExonFromTxDb(txdb,map,asdf))
-#~                 }
-#~             )
-#~         }
-#~     )
-}
-
-# ann <- .makeGeneGeneFromTxDb(txdb,map,FALSE)
-.makeGeneGeneFromTxDb <- function(txdb,map,asdf) {
-    if (!is.null(map)) {
-        gr <- genes(txdb)
-        # We need to add gc_content, gene_name, biotype from the map
-        # Remove the exon_id and transcript_id columns from the map
-        # for the gene case
-        ir <- c(which(names(map)=="exon_id"),
-            which(names(map)=="transcript_id"))
-        if (length(ir) > 0)
-            smap <- map[,-ir,drop=FALSE]
-        dgt <- which(duplicated(smap))
-        if (length(dgt) > 0)
-            smap <- smap[-dgt,]
-        
-        # Add metadata from the map
-        rownames(smap) <- smap$gene_id
-        smap <- smap[names(gr),,drop=FALSE]
-        gr$gene_name <- smap$gene_name
-        gr$biotype <- smap$biotype
-    }
-    else {
-        gr <- genes(txdb,columns=c("gene_id","tx_type"))
-        gr$gene_id <- as.character(gr$gene_id)
-        gr$gene_name <- gr$gene_id
-        gr$biotype <- unlist(gr$tx_type)
-        gr$tx_type <- NULL
-    }
-    
-    gr$gc_content = rep(50,length(gr))
-    ann <- as.data.frame(gr)
-    ann <- ann[,c(1:3,6,9,5,7,8)]
-    names(ann)[1] <- "chromosome"
-    ann$chromosome <- as.character(ann$chromosome)
-    ann <- ann[order(ann$chromosome,ann$start),]
-    
-    if (asdf)
-        return(ann)
-    else
-        return(GRanges(ann))
-}
-
-# ann <- .makeGeneExonFromTxDb(txdb,map,FALSE)
-.makeGeneExonFromTxDb <- function(txdb,map,asdf) {
-    if (!is.null(map)) {
-        gr <- exons(txdb,columns="exon_name")
-        
-        # There are cases where exons are unnamed and just the structure 
-        useMap <- TRUE
-        if (any(is.na(gr$exon_name)))
-            useMap <- FALSE
-        
-        if (useMap) {
-            names(gr) <- gr$exon_name
-        
-            # We need to add gene_id, gene_name, biotype from the map
-            # Remove the transcript_id column from the map for the gene
-            # case
-            ir <- which(names(map)=="transcript_id")
-            if (length(ir) > 0)
-                smap <- map[,-ir,drop=FALSE]
-            dgt <- which(duplicated(smap))
-            if (length(dgt) > 0)
-                smap <- smap[-dgt,]
-            
-            # Add metadata from the map
-            rownames(smap) <- smap$exon_id
-            smap <- smap[names(gr),,drop=FALSE]
-            gr$gene_id <- smap$gene_id
-            gr$gene_name <- smap$gene_name
-            gr$biotype <- smap$biotype
-        }
-        else {
-            # In order to create the exon annotation, we need to manually 
-            # overlap and assign to genes
-            ge <- genes(txdb,columns=c("gene_id","tx_type"))
-            ov <- findOverlaps(gr,ge)
-            exonPos <- queryHits(ov)
-            genePos <- subjectHits(ov)
-            levs <- unique(genePos)
-            
-            dup <- which(duplicated(exonPos))
-            if (length(dup) > 0) {
-                exonPos <- exonPos[-dup]
-                genePos <- genePos[-dup]
-            }
-            
-            S <- split(exonPos,factor(genePos,levels=levs))
-            gr$gene_id <- gr$gene_name <- rep(names(ge)[levs],lengths(S))
-            gr$biotype <- rep(unlist(ge$tx_type,use.names=FALSE)[levs],
-                lengths(S))
-            #gr$biotype <- rep("gene",length(gr))
-            if (is(gr$gene_id,"CharacterList"))
-                gtmp <- unlist(lapply(gr$gene_id,function(x) x[1]))
-            else
-                gtmp <- gr$gene_id
-            names(gr) <- paste(seqnames(gr),":",start(gr),"-",end(gr),"_",
-                gtmp,sep="")
-            gr$exon_name <- names(gr)
-        }
-    }
-    else {
-        gr <- exons(txdb,columns=c("exon_name","gene_id","tx_type"))
-        if (is(gr$gene_id,"CharacterList"))
-            gtmp <- unlist(lapply(gr$gene_id,function(x) x[1]))
-        else
-            gtmp <- gr$gene_id
-        if (any(is.na(gr$exon_name)))            
-            names(gr) <- paste(seqnames(gr),":",start(gr),"-",end(gr),"_",
-                gtmp,sep="")
-        else
-            names(gr) <- gr$exon_name
-        gr$gene_id <- gtmp
-        gr$gene_name <- gr$gene_id
-        gr$biotype <- unlist(lapply(gr$tx_type,function(x) x[1]))
-        gr$tx_type <- NULL
-    }
-    
-    ann <- as.data.frame(unname(gr))
-    ann <- ann[,c(1,2,3,6,7,5,8,9)]
-    names(ann)[c(1,4)] <- c("chromosome","exon_id")
-    ann$chromosome <- as.character(ann$chromosome)
-    ann <- ann[order(ann$chromosome,ann$start),]
-    if (length(unique(ann$exon_id)) == length(ann$exon_id))
-        # Should always be TRUE
-        rownames(ann) <- as.character(ann$exon_id)
-    
-    if (asdf)
-        return(ann)
-    else
-        return(GRanges(ann))
-}
-
-# ann <- .makeSumGeneExonFromTxDb(txdb,map,FALSE)
-.makeSumGeneExonFromTxDb <- function(txdb,map,asdf) {
-    if (!is.null(map)) {
-        gr <- exons(txdb,columns="exon_name")
-        
-        useMap <- TRUE
-        if (any(is.na(gr$exon_name)))
-            useMap <- FALSE
-        
-        if (useMap) {
-            names(gr) <- gr$exon_name
-            
-            # We need to add gene_id, gene_name, biotype from the map
-            # Remove the transcript_id column from the map for the gene
-            # case
-            ir <- which(names(map)=="transcript_id")
-            if (length(ir) > 0)
-                smap <- map[,-ir,drop=FALSE]
-            dgt <- which(duplicated(smap))
-            if (length(dgt) > 0)
-                smap <- smap[-dgt,]
-            
-            # Add metadata from the map
-            rownames(smap) <- smap$exon_id
-            smap <- smap[names(gr),,drop=FALSE]
-            gr$gene_id <- smap$gene_id
-            gr$gene_name <- smap$gene_name
-            gr$biotype <- smap$biotype
-        }
-        else {
-            # In order to create the exon annotation, we need to manually 
-            # overlap and assign to genes
-            ge <- genes(txdb,columns=c("gene_id","tx_type"))
-            ov <- findOverlaps(gr,ge)
-            exonPos <- queryHits(ov)
-            genePos <- subjectHits(ov)
-            levs <- unique(genePos)
-            
-            dup <- which(duplicated(exonPos))
-            if (length(dup) > 0) {
-                exonPos <- exonPos[-dup]
-                genePos <- genePos[-dup]
-            }
-            
-            S <- split(exonPos,factor(genePos,levels=levs))
-            gr$gene_id <- gr$gene_name <- rep(names(ge)[levs],lengths(S))
-            gr$biotype <- rep(unlist(ge$tx_type,use.names=FALSE)[levs],
-                lengths(S))
-            if (is(gr$gene_id,"CharacterList"))
-                gtmp <- unlist(lapply(gr$gene_id,function(x) x[1]))
-            else
-                gtmp <- gr$gene_id
-            names(gr) <- paste(seqnames(gr),":",start(gr),"-",end(gr),"_",
-                gtmp,sep="")
-            gr$exon_name <- names(gr)
-        }
-    }
-    else {
-        gr <- exons(txdb,columns=c("exon_name","gene_id","tx_type"))
-        if (is(gr$gene_id,"CharacterList"))
-            gtmp <- unlist(lapply(gr$gene_id,function(x) x[1]))
-        else
-            gtmp <- gr$gene_id
-        if (any(is.na(gr$exon_name)))            
-            names(gr) <- paste(seqnames(gr),":",start(gr),"-",end(gr),"_",
-                gtmp,sep="")
-        else
-            names(gr) <- gr$exon_name
-        gr$gene_id <- gtmp
-        gr$gene_name <- gr$gene_id
-        gr$biotype <- unlist(lapply(gr$tx_type,function(x) x[1]))
-        gr$tx_type <- NULL
-    }
-    
-    ann <- as.data.frame(unname(gr))
-    ann <- ann[,c(1,2,3,6,8,5,7,9)]
-    names(ann)[c(1,4)] <- c("chromosome","exon_id")
-    ann$chromosome <- as.character(ann$chromosome)
-    ann <- ann[order(ann$chromosome,ann$start),]
-    
-    message("  summarizing exons per gene for imported GTF")
-    annList <- reduceExons(GRanges(ann))
-    sexon <- annList$model
-    names(sexon) <- as.character(sexon$exon_id)
-    activeLength <- annList$length
-    names(activeLength) <- unique(sexon$gene_id)
-    attr(sexon,"activeLength") <- activeLength
-    
-    if (asdf) {
-        eann <- as.data.frame(sexon)
-        eann <- eann[,c(1,2,3,6,8,5,7,9)]
-        names(eann)[c(1,4)] <- c("chromosome","exon_id")
-        attr(eann,"activeLength") <- activeLength
-        return(eann)
-    }
-    else
-        return(sexon)
-}
-
-# ann <- .makeGeneUtrFromTxDb(txdb,map,FALSE)
-.makeGeneUtrFromTxDb <- function(txdb,map,asdf) {
-    utrList <- threeUTRsByTranscript(txdb,use.names=TRUE)
-    utrGr <- unlist(utrList)
-    
-    # There may be no sufficient information to create UTRs
-    if (length(utrGr) == 0) {
-        warning("No UTR information was found in the provided GTF file! Will ",
-            "return an empty object...",immediate.=TRUE)
-        ann <- data.frame(chromosome=1,start=1,end=1,
-            transcript_id=1,gene_id=1,strand=1,gene_name=1,
-            biotype=1,row.names=1)
-        # Strange but required to be compatible with GRanges
-        ann <- ann[-1,]
-        if (asdf)
-            return(ann)
-        else
-            return(GRanges(ann))
-    }
-    
-    utrGr$transcript_id <- names(utrGr)
-    utrTmp <- as.data.frame(unname(utrGr))
-    keep <- c("seqnames","start","end","transcript_id",
-        "exon_rank","strand","exon_name")
-    utr <- utrTmp[,keep]
-    
-    useMap <- TRUE
-    if (any(is.na(utr$exon_name)) || is.null(map))
-        # Impossible to take info from map...
-        useMap <- FALSE
-    else
-        rownames(utr) <- paste(utr$exon_name,utr$transcript_id,sep="_")
-        
-    if (useMap) {
-        rownames(map) <- paste(map$exon_id,map$transcript_id,sep="_")
-
-        # Different case with map here
-        smap <- map[rownames(utr),]
-        
-        # We need to add gene_id, gene_name, biotype from the map
-        # Remove the exon_id column from the map for the gene case
-        ir <- which(names(smap)=="exon_id")
-        if (length(ir) > 0)
-            smap <- smap[,-ir,drop=FALSE]
-        
-        # Add metadata from the map
-        utr$gene_id <- smap$gene_id
-        utr$gene_name <- smap$gene_name
-        utr$biotype <- smap$biotype
-    }
-    else {
-        # Add metadata from the utr frame
-        utr$gene_id <- utr$transcript_id
-        utr$gene_name <- utr$gene_id
-        
-        # To get biotypes
-        ge <- genes(txdb,columns=c("gene_id","tx_type"))
-        ov <- findOverlaps(utrGr,ge)
-        utrPos <- queryHits(ov)
-        genePos <- subjectHits(ov)
-        levs <- unique(genePos)
-        
-        dup <- which(duplicated(utrPos))
-        if (length(dup) > 0) {
-            utrPos <- utrPos[-dup]
-            genePos <- genePos[-dup]
-        }
-        
-        S <- split(utrPos,factor(genePos,levels=levs))
-        utr$biotype <- rep(unlist(ge$tx_type,use.names=FALSE)[levs],lengths(S))
-        #utr$biotype <- rep("gene",nrow(utr))
-    }
-    
-    ann <- utr[,c(1,2,3,4,8,6,9,10)]
-    names(ann)[1] <- "chromosome"
-    ann$chromosome <- as.character(ann$chromosome)
-    ann <- ann[order(ann$chromosome,ann$start),]
-    
-    if (asdf)
-        return(ann)
-    else
-        return(GRanges(ann))
-}
-
-# ann <- .makeSumGeneUtrFromTxDb(txdb,map,FALSE)
-.makeSumGeneUtrFromTxDb <- function(txdb,map,asdf) {
-    utrList <- threeUTRsByTranscript(txdb,use.names=TRUE)
-    utrGr <- unlist(utrList)
-    
-    if (length(utrGr) == 0) {
-        warning("No UTR information was found in the provided GTF file! Will ",
-            "return an empty object...",immediate.=TRUE)
-        ann <- data.frame(chromosome=1,start=1,end=1,
-            transcript_id=1,gene_id=1,strand=1,gene_name=1,
-            biotype=1,row.names=1)
-        # Strange but required to be compatible with GRanges
-        ann <- ann[-1,]
-        if (asdf)
-            return(ann)
-        else
-            return(GRanges(ann))
-    }
-    
-    utrGr$transcript_id <- names(utrGr)
-    utrTmp <- as.data.frame(unname(utrGr))
-    keep <- c("seqnames","start","end","transcript_id",
-        "exon_rank","strand","exon_name")
-    utr <- utrTmp[,keep]
-    
-    useMap <- TRUE
-    if (any(is.na(utr$exon_name)) || is.null(map))
-        useMap <- FALSE
-    else
-        rownames(utr) <- paste(utr$exon_name,utr$transcript_id,sep="_")
-    
-    if (useMap) {
-        rownames(map) <- paste(map$exon_id,map$transcript_id,sep="_")
-    
-        # Different case with map here
-        smap <- map[rownames(utr),]
-        
-        # We need to add gene_id, gene_name, biotype from the map
-        # Remove the exon_id column from the map for the gene case
-        ir <- which(names(smap)=="exon_id")
-        if (length(ir) > 0)
-            smap <- smap[,-ir,drop=FALSE]
-        
-        # Add metadata from the map
-        utr$gene_id <- smap$gene_id
-        utr$gene_name <- smap$gene_name
-        utr$biotype <- smap$biotype
-    }
-    else {
-        # Add metadata from the utr frame
-        utr$gene_id <- utr$transcript_id
-        utr$gene_name <- utr$gene_id
-        
-        # To get biotypes
-        ge <- genes(txdb,columns=c("gene_id","tx_type"))
-        ov <- findOverlaps(utrGr,ge)
-        utrPos <- queryHits(ov)
-        genePos <- subjectHits(ov)
-        levs <- unique(genePos)
-        
-        dup <- which(duplicated(utrPos))
-        if (length(dup) > 0) {
-            utrPos <- utrPos[-dup]
-            genePos <- genePos[-dup]
-        }
-        
-        S <- split(utrPos,factor(genePos,levels=levs))
-        utr$biotype <- rep(unlist(ge$tx_type,use.names=FALSE)[levs],lengths(S))
-    }
-    ann <- utr[,c(1,2,3,4,8,6,9,10)]
-    names(ann)[1] <- "chromosome"
-    ann$chromosome <- as.character(ann$chromosome)
-    ann <- ann[order(ann$chromosome,ann$start),]
-    
-    message("  summarizing UTRs per gene for imported GTF")
-    #s3utr <- reduceTranscripts(GRanges(ann))
-    annList <- reduceTranscripts(GRanges(ann))
-    s3utr <- annList$model
-    names(s3utr) <- as.character(s3utr$transcript_id)
-    activeLength <- annList$length
-    names(activeLength) <- unique(as.character(s3utr$gene_id))
-    
-    if (asdf) {
-        sann <- as.data.frame(s3utr)
-        sann <- sann[,c(1,2,3,6,8,5,7,9)]
-        if (useMap)
-            names(sann)[c(1,4)] <- c("chromosome","gene_id")
-        else {
-            sann <- sann[,c(1,2,3,7,5,6,4,8)]
-            names(sann)[c(1,4,7)] <- c("chromosome","gene_id","transcript_id")
-        }
-        attr(sann,"activeLength") <- activeLength
-        return(sann)
-    }
-    else
-        return(s3utr)
-}
-
-# ann <- .makeTranscriptGeneFromTxDb(txdb,map,FALSE)
-.makeTranscriptGeneFromTxDb <- function(txdb,map,asdf) {
-    if (!is.null(map)) {
-        gr <- transcripts(txdb,columns="tx_name")
-        names(gr) <- gr$tx_name
-        
-        # We need to add gene_id, gene_name, biotype from the map
-        # Remove the exon_id column from the map for the transcript 
-        # case
-        ir <- which(names(map)=="exon_id")
-        if (length(ir) > 0)
-            smap <- map[,-ir,drop=FALSE]
-        dgt <- which(duplicated(smap))
-        if (length(dgt) > 0)
-            smap <- smap[-dgt,]
-        
-        # Add metadata from the map
-        rownames(smap) <- smap$transcript_id
-        smap <- smap[names(gr),,drop=FALSE]
-        gr$gene_id <- smap$gene_name
-        gr$gene_name <- smap$gene_name
-        gr$biotype <- smap$biotype
-    }
-    else {
-        gr <- transcripts(txdb,columns=c("tx_name","gene_id","tx_type"))
-        if (is(gr$gene_id,"CharacterList"))
-            gtmp <- unlist(lapply(gr$gene_id,function(x) x[1]))
-        else
-            gtmp <- as.character(gr$gene_id)
-        gr$gene_id <- gtmp
-        gr$gene_name <- gr$gene_id
-        gr$biotype <- unlist(lapply(gr$tx_type,function(x) x[1]))
-        gr$tx_type <- NULL
-    }
-    
-    ann <- as.data.frame(gr)
-    ann <- ann[,c(1,2,3,6,7,5,8,9)]
-    names(ann)[c(1,4)] <- c("chromosome","transcript_id")
-    ann$chromosome <- as.character(ann$chromosome)
-    ann <- ann[order(ann$chromosome,ann$start),]
-    
-    if (asdf)
-        return(ann)
-    else
-        return(GRanges(ann))
-}
-
-# ann <- .makeSumTranscriptGeneFromTxDb(txdb,map,FALSE)
-.makeSumTranscriptGeneFromTxDb <- function(txdb,map,asdf) {
-    if (!is.null(map)) {
-        gr <- transcripts(txdb,columns="tx_name")
-        names(gr) <- gr$tx_name
-        
-        # We need to add gene_id, gene_name, biotype from the map
-        # Remove the exon_id column from the map for the transcript 
-        # case
-        ir <- which(names(map)=="exon_id")
-        if (length(ir) > 0)
-            smap <- map[,-ir,drop=FALSE]
-        dgt <- which(duplicated(smap))
-        if (length(dgt) > 0)
-            smap <- smap[-dgt,]
-        
-        # Add metadata from the map
-        rownames(smap) <- smap$transcript_id
-        smap <- smap[names(gr),,drop=FALSE]
-        gr$gene_id <- smap$gene_name
-        gr$gene_name <- smap$gene_name
-        gr$biotype <- smap$biotype
-    }
-    else {
-        gr <- transcripts(txdb,columns=c("tx_name","gene_id","tx_type"))
-        if (is(gr$gene_id,"CharacterList"))
-            gtmp <- unlist(lapply(gr$gene_id,function(x) x[1]))
-        else
-            gtmp <- as.character(gr$gene_id)
-        gr$gene_id <- gtmp
-        #gr$gene_id <- as.character(gr$gene_id)
-        gr$gene_name <- gr$gene_id
-        gr$biotype <- unlist(lapply(gr$tx_type,function(x) x[1]))
-        gr$tx_type <- NULL
-    }
-    
-    ann <- as.data.frame(gr)
-    ann <- ann[,c(1,2,3,6,7,5,8,9)]
-    names(ann)[c(1,4)] <- c("chromosome","transcript_id")
-    ann$chromosome <- as.character(ann$chromosome)
-    ann <- ann[order(ann$chromosome,ann$start),]
-    
-    #stranscript <- reduceTranscripts(GRanges(ann))
-    annList <- reduceTranscripts(GRanges(ann))
-    stranscript <- annList$model
-    names(stranscript) <- as.character(stranscript$transcript_id)
-    activeLength <- annList$length
-    #names(activeLength) <- as.character(stranscript$transcript_id)
-    names(activeLength) <- unique(stranscript$gene_id)
-    
-    if (asdf) {
-        sann <- as.data.frame(stranscript)
-        sann <- sann[,c(1,2,3,6,8,5,7,9)]
-        names(sann)[c(1,4)] <- c("chromosome","transcript_id")
-        attr(sann,"activeLength") <- activeLength
-        return(sann)
-    }
-    else
-        return(stranscript)
-}
-
-# ann <- .makeTranscriptExonFromTxDb(txdb,map,FALSE)
-.makeTranscriptExonFromTxDb <- function(txdb,map,asdf) {
-    gr <- exonsBy(txdb,by="tx")
-    tr <- transcripts(txdb,columns=c("tx_name","gene_id"))
-    if (is(tr$gene_id,"CharacterList"))
-        gtmp <- unlist(lapply(tr$gene_id,function(x) x[1]))
-    else
-        gtmp <- tr$gene_id
-    names(gr) <- names(tr) <- tr$tx_name
-        
-    if (!is.null(map)) {
-        grTmp <- as.data.frame(gr)
-        grTmp$gene_id <- rep(gtmp,lengths(gr))
-        names(grTmp)[2] <- "transcript_id"
-        keep <- c("seqnames","start","end","exon_name","transcript_id","strand")
-        ann <- grTmp[,keep]
-        ann$transcript_id <- as.character(ann$transcript_id)
-        rownames(ann) <- paste(ann$exon_name,ann$transcript_id,sep="_")
-        
-        # There are cases where exons are unnamed and just the structure 
-        useMap <- TRUE
-        if (any(is.na(gr$exon_name)))
-            useMap <- FALSE
-        
-        if (useMap) {
-            rownames(map) <- paste(map$exon_id,map$transcript_id,sep="_")
-
-            # Different case with map here
-            smap <- map[intersect(rownames(ann),rownames(map)),]
-            ann <- ann[intersect(rownames(ann),rownames(map)),]
-            
-            # We need to add gene_id, gene_name, biotype from the map
-            # Remove the exon_id column from the map for the gene case
-            ir <- which(names(map)=="gene_id")
-            if (length(ir) > 0)
-                smap <- smap[,-ir,drop=FALSE]
-            
-            # Add metadata from the map
-            ann$gene_name <- smap$gene_name
-            ann$biotype <- smap$biotype
-            
-            names(ann)[c(1,4)] <- c("chromosome","exon_id")
-            ann$chromosome <- as.character(ann$chromosome)
-            ord <- order(ann$chromosome,ann$start)
-            ann <- ann[ord,]
-            smap <- smap[ord,]
-            if (length(unique(ann$exon_id)) == length(ann$exon_id))
-                rownames(ann) <- as.character(ann$exon_id)
-            else
-                rownames(ann) <- rownames(smap)
-        }
-        else {
-            # In order to create the exon annotation, we need to manually 
-            # overlap and assign to transcripts
-            gr <- unlist(gr)
-            ov <- findOverlaps(gr,tr)
-            exonPos <- queryHits(ov)
-            tranPos <- subjectHits(ov)
-            levs <- unique(tranPos)
-            
-            dup <- which(duplicated(exonPos))
-            if (length(dup) > 0) {
-                exonPos <- exonPos[-dup]
-                tranPos <- tranPos[-dup]
-            }
-            
-            S <- split(exonPos,factor(tranPos,levels=levs))
-            gr$transcript_id <- rep(names(tr)[levs],lengths(S))
-            gr$gene_name <- rep(tr$gene_id[levs],lengths(S))
-            gr$biotype <- rep("transcript",length(gr))
-            if (is(gr$gene_name,"CharacterList"))
-                gtmp <- unlist(lapply(gr$gene_name,function(x) x[1]))
-            else
-                gtmp <- gr$gene_name
-            names(gr) <- paste(seqnames(gr),":",start(gr),"-",end(gr),"_",
-                gr$transcript_id,sep="")
-            gr$exon_name <- names(gr)
-            gr$gene_name <- gtmp
-            
-            ann <- as.data.frame(unname(gr))
-            ann <- ann[,c(1,2,3,7,9,5,10,11)]
-            names(ann)[c(1,4)] <- c("chromosome","exon_id")
-            ann$chromosome <- as.character(ann$chromosome)
-            ord <- order(ann$chromosome,ann$start)
-            ann <- ann[ord,]
-            if (length(unique(ann$exon_id)) == length(ann$exon_id))
-                # Should always be TRUE
-                rownames(ann) <- as.character(ann$exon_id)
-        }
-    }
-    else {
-        # The same as above... some repetition, we check later
-        gr <- unlist(gr)
-        ov <- findOverlaps(gr,tr)
-        exonPos <- queryHits(ov)
-        tranPos <- subjectHits(ov)
-        levs <- unique(tranPos)
-        
-        dup <- which(duplicated(exonPos))
-        if (length(dup) > 0) {
-            exonPos <- exonPos[-dup]
-            tranPos <- tranPos[-dup]
-        }
-        
-        S <- split(exonPos,factor(tranPos,levels=levs))
-        gr$transcript_id <- rep(names(tr)[levs],lengths(S))
-        gr$gene_name <- rep(tr$gene_id[levs],lengths(S))
-        gr$biotype <- rep("transcript",length(gr))
-        if (is(gr$gene_name,"CharacterList"))
-            gtmp <- unlist(lapply(gr$gene_name,function(x) x[1]))
-        else
-            gtmp <- gr$gene_name
-        names(gr) <- paste(seqnames(gr),":",start(gr),"-",end(gr),"_",
-            gr$transcript_id,sep="")
-        gr$exon_name <- names(gr)
-        gr$gene_name <- gtmp
-        
-        ann <- as.data.frame(unname(gr))
-        ann <- ann[,c(1,2,3,7,9,5,10,11)]
-        names(ann)[c(1,4)] <- c("chromosome","exon_id")
-        ann$chromosome <- as.character(ann$chromosome)
-        ord <- order(ann$chromosome,ann$start)
-        ann <- ann[ord,]
-        if (length(unique(ann$exon_id)) == length(ann$exon_id))
-            # Should always be TRUE
-            rownames(ann) <- as.character(ann$exon_id)
-    }
-    
-    if (asdf)
-        return(ann)
-    else
-        return(GRanges(ann))
-}
-
-# ann <- .makeSumTranscriptExonFromTxDb(txdb,map,FALSE)
-.makeSumTranscriptExonFromTxDb <- function(txdb,map,asdf) {
-    # Test code rewrapping
-    annGr <- .makeTranscriptExonFromTxDb(txdb,map,asdf=FALSE)
-    
-    # Do the rest
-    annList <- reduceTranscriptsExons(annGr)
-    strexon <- annList$model
-    names(strexon) <- as.character(strexon$exon_id)
-    activeLength <- annList$length
-    names(activeLength) <- unique(strexon$transcript_id)
-    
-    if (asdf) {
-        sann <- as.data.frame(strexon)
-        sann <- sann[,c(1,2,3,6,7,5,8,9)]
-        names(sann)[c(1,4)] <- c("chromosome","exon_id")
-        attr(sann,"activeLength") <- activeLength
-        return(sann)
-    }
-    else
-        return(strexon)   
-}
-
-# ann <- .makeTranscriptUtrFromTxDb(txdb,map,FALSE)
-.makeTranscriptUtrFromTxDb <- function(txdb,map,asdf) {
-    utrList <- threeUTRsByTranscript(txdb,use.names=TRUE)
-    utrGr <- unlist(utrList)
-    
-    if (length(utrGr) == 0) {
-        warning("No UTR information was found in the provided GTF file! Will ",
-            "return an empty object...",immediate.=TRUE)
-        ann <- data.frame(chromosome=1,start=1,end=1,
-            transcript_id=1,gene_id=1,strand=1,gene_name=1,
-            biotype=1,row.names=1)
-        # Strange but required to be compatible with GRanges
-        ann <- ann[-1,]
-        if (asdf)
-            return(ann)
-        else
-            return(GRanges(ann))
-    }
-    
-    utrGr$transcript_id <- names(utrGr)
-    utrTmp <- as.data.frame(unname(utrGr))
-    keep <- c("seqnames","start","end","transcript_id",
-        "exon_rank","strand","exon_name")
-    utr <- utrTmp[,keep]
-    
-    useMap <- TRUE
-    if (any(is.na(utr$exon_name)) || is.null(map))
-        useMap <- FALSE
-    else
-        rownames(utr) <- paste(utr$exon_name,utr$transcript_id,sep="_")
-    
-    if (useMap) {
-        rownames(map) <- paste(map$exon_id,map$transcript_id,sep="_")
-    
-        # Different case with map here
-        smap <- map[rownames(utr),]
-        
-        # We need to add gene_id, gene_name, biotype from the map
-        # Remove the exon_id column from the map for the gene case
-        ir <- which(names(map)=="exon_id")
-        if (length(ir) > 0)
-            smap <- smap[,-ir,drop=FALSE]
-        
-        # Add metadata from the map
-        #rownames(smap) <- smap$transcript_id
-        #smap <- smap[rownames(utr),]
-        utr$gene_id <- smap$gene_id
-        utr$gene_name <- smap$gene_name
-        utr$biotype <- smap$biotype
-    }
-    else {
-        # Add metadata from the utr frame
-        utr$gene_id <- utr$transcript_id
-        utr$gene_name <- utr$gene_id
-        
-        # To get biotypes
-        ge <- genes(txdb,columns=c("gene_id","tx_type"))
-        ov <- findOverlaps(utrGr,ge)
-        utrPos <- queryHits(ov)
-        genePos <- subjectHits(ov)
-        levs <- unique(genePos)
-        
-        dup <- which(duplicated(utrPos))
-        if (length(dup) > 0) {
-            utrPos <- utrPos[-dup]
-            genePos <- genePos[-dup]
-        }
-        
-        S <- split(utrPos,factor(genePos,levels=levs))
-        utr$biotype <- rep(unlist(ge$tx_type,use.names=FALSE)[levs],lengths(S))
-        #utr$biotype <- rep("gene",nrow(utr))
-    }
-    
-    #ann <- utr[,c(1,2,3,4,7,6,8,9)]
-    ann <- utr[,c(1,2,3,4,8,6,9,10)]
-    names(ann)[1] <- "chromosome"
-    ann$chromosome <- as.character(ann$chromosome)
-    ann <- ann[order(ann$chromosome,ann$start),]
-    
-    if (asdf)
-        return(ann)
-    else
-        return(GRanges(ann))
-}
-
-# ann <- .makeSumTranscriptUtrFromTxDb(txdb,map,FALSE)
-.makeSumTranscriptUtrFromTxDb <- function(txdb,map,asdf) {
-    utrList <- threeUTRsByTranscript(txdb,use.names=TRUE)
-    utrGr <- unlist(utrList)
-    
-    if (length(utrGr) == 0) {
-        warning("No UTR information was found in the provided GTF file! Will ",
-            "return an empty object...",immediate.=TRUE)
-        ann <- data.frame(chromosome=1,start=1,end=1,
-            transcript_id=1,gene_id=1,strand=1,gene_name=1,
-            biotype=1,row.names=1)
-        # Strange but required to be compatible with GRanges
-        ann <- ann[-1,]
-        if (asdf)
-            return(ann)
-        else
-            return(GRanges(ann))
-    }
-    
-    utrGr$transcript_id <- names(utrGr)
-    utrTmp <- as.data.frame(unname(utrGr))
-    keep <- c("seqnames","start","end","transcript_id",
-        "exon_rank","strand","exon_name")
-    utr <- utrTmp[,keep]
-    
-    useMap <- TRUE
-    if (any(is.na(utr$exon_name)) || is.null(map))
-        useMap <- FALSE
-    else
-        rownames(utr) <- paste(utr$exon_name,utr$transcript_id,sep="_")
-    
-    if (useMap) {
-        rownames(map) <- paste(map$exon_id,map$transcript_id,sep="_")
-        
-        # Different case with map here
-        smap <- map[rownames(utr),]
-        
-        # We need to add gene_id, gene_name, biotype from the map
-        # Remove the exon_id column from the map for the gene case
-        ir <- which(names(map)=="exon_id")
-        if (length(ir) > 0)
-            smap <- smap[,-ir,drop=FALSE]
-        
-        # Add metadata from the map
-        utr$gene_id <- smap$gene_id
-        utr$gene_name <- smap$gene_name
-        utr$biotype <- smap$biotype
-    }
-    else {
-        # Add metadata from the utr frame
-        utr$gene_id <- utr$transcript_id
-        utr$gene_name <- utr$gene_id
-        
-        # To get biotypes
-        ge <- genes(txdb,columns=c("gene_id","tx_type"))
-        ov <- findOverlaps(utrGr,ge)
-        utrPos <- queryHits(ov)
-        genePos <- subjectHits(ov)
-        levs <- unique(genePos)
-        
-        dup <- which(duplicated(utrPos))
-        if (length(dup) > 0) {
-            utrPos <- utrPos[-dup]
-            genePos <- genePos[-dup]
-        }
-        
-        S <- split(utrPos,factor(genePos,levels=levs))
-        utr$biotype <- rep(unlist(ge$tx_type,use.names=FALSE)[levs],lengths(S))
-    }
-    
-    #ann <- utr[,c(1,2,3,4,7,6,8,9)]
-    ann <- utr[,c(1,2,3,4,8,6,9,10)]
-    names(ann)[1] <- "chromosome"
-    ann$chromosome <- as.character(ann$chromosome)
-    ann <- ann[order(ann$chromosome,ann$start),]
-    
-    message("  summarizing UTRs per gene for imported GTF")
-    #s3utrTranscript <- reduceTranscriptsUtr(GRanges(ann))
-    annList <- reduceTranscriptsUtr(GRanges(ann))
-    s3utrTranscript <- annList$model
-    names(s3utrTranscript) <- 
-        as.character(s3utrTranscript$transcript_id)
-    activeLength <- annList$length
-    #names(activeLength) <- as.character(s3utrTranscript$transcript_id)
-    # Remember, gene_id in UTR's per transcript is the transcript
-    names(activeLength) <- unique(as.character(s3utrTranscript$gene_id))
-    
-    if (asdf) {
-        sann <- as.data.frame(s3utrTranscript)
-        sann <- sann[,c(1,2,3,6,8,5,7,9)]
-        names(sann)[c(1,4)] <- c("chromosome","transcript_id")
-        attr(sann,"activeLength") <- activeLength
-        return(sann)
-    }
-    else
-        return(s3utrTranscript)
-}
-
-# ann <- .makeExonExonFromTxDb(txdb,map,FALSE)
-.makeExonExonFromTxDb <- function(txdb,map,asdf) {
-    if (!is.null(map)) {
-        gr <- exons(txdb,columns="exon_name")
-        
-        # There are cases where exons are unnamed and just the structure 
-        useMap <- TRUE
-        if (any(is.na(gr$exon_name)))
-            useMap <- FALSE
-        
-        if (useMap) {
-            names(gr) <- gr$exon_name
-            # We need to add gene_id, gene_name, biotype from the map
-            # Remove the transcript_id column from the map for the gene
-            # case
-            ir <- which(names(map)=="transcript_id")
-            if (length(ir) > 0)
-                smap <- map[,-ir,drop=FALSE]
-            dgt <- which(duplicated(smap))
-            if (length(dgt) > 0)
-                smap <- smap[-dgt,]
-            
-            # Add metadata from the map
-            rownames(smap) <- smap$exon_id
-            smap <- smap[names(gr),,drop=FALSE]
-            gr$gene_id <- smap$gene_id
-            gr$gene_name <- smap$gene_name
-            gr$biotype <- smap$biotype
-            
-            ann <- as.data.frame(unname(gr))
-            #ann <- ann[,c(1,2,3,6,8,5,7,9)]
-            ann <- ann[,c(1,2,3,6,7,5,8,9)]
-            names(ann)[c(1,4)] <- c("chromosome","exon_id")
-            ann$chromosome <- as.character(ann$chromosome)
-            ord <- order(ann$chromosome,ann$start)
-            ann <- ann[ord,]
-            smap <- smap[ord,]
-            if (length(unique(ann$exon_id)) == length(ann$exon_id))
-                rownames(ann) <- as.character(ann$exon_id)
-            else
-                rownames(ann) <- rownames(smap)
-        }
-        else {
-            # In order to create the exon annotation, we need to manually 
-            # overlap and assign to genes
-            ge <- genes(txdb)
-            ov <- findOverlaps(gr,ge)
-            exonPos <- queryHits(ov)
-            genePos <- subjectHits(ov)
-            levs <- unique(genePos)
-            
-            dup <- which(duplicated(exonPos))
-            if (length(dup) > 0) {
-                exonPos <- exonPos[-dup]
-                genePos <- genePos[-dup]
-            }
-            
-            S <- split(exonPos,factor(genePos,levels=levs))
-            gr$gene_id <- gr$gene_name <- rep(names(ge)[levs],lengths(S))
-            gr$biotype <- rep("gene",length(gr))
-            if (is(gr$gene_id,"CharacterList"))
-                gtmp <- unlist(lapply(gr$gene_id,function(x) x[1]))
-            else
-                gtmp <- gr$gene_id
-            names(gr) <- paste(seqnames(gr),":",start(gr),"-",end(gr),"_",
-                gtmp,sep="")
-            gr$exon_name <- names(gr)
-            
-            ann <- as.data.frame(unname(gr))
-            ann <- ann[,c(1,2,3,6,7,5,8,9)]
-            names(ann)[c(1,4)] <- c("chromosome","exon_id")
-            ann$chromosome <- as.character(ann$chromosome)
-            ord <- order(ann$chromosome,ann$start)
-            ann <- ann[ord,]
-            if (length(unique(ann$exon_id)) == length(ann$exon_id))
-                # Should always be TRUE
-                rownames(ann) <- as.character(ann$exon_id)
-        }
-    }
-    else {
-        gr <- exons(txdb,columns=c("exon_name","gene_id","tx_type"))
-        if (is(gr$gene_id,"CharacterList"))
-            gtmp <- unlist(lapply(gr$gene_id,function(x) x[1]))
-        else
-            gtmp <- gr$gene_id
-        if (any(is.na(gr$exon_name)))            
-            names(gr) <- paste(seqnames(gr),":",start(gr),"-",end(gr),"_",
-                gtmp,sep="")
-        else
-            names(gr) <- gr$exon_name
-        gr$gene_id <- gtmp
-        gr$gene_name <- gr$gene_id
-        gr$biotype <- unlist(lapply(gr$tx_type,function(x) x[1]))
-        gr$tx_type <- NULL
-        ann <- as.data.frame(unname(gr))
-        ann <- ann[,c(1,2,3,6,7,5,8,9)]
-        names(ann)[c(1,4)] <- c("chromosome","exon_id")
-        ann$chromosome <- as.character(ann$chromosome)
-        ord <- order(ann$chromosome,ann$start)
-        ann <- ann[ord,]
-        if (length(unique(ann$exon_id)) == length(ann$exon_id))
-            # Should always be TRUE
-            rownames(ann) <- as.character(ann$exon_id)
-    }
-    
-    if (asdf)
-        return(ann)
-    else
-        return(GRanges(ann))
-}
-
-.makeIdMap <- function(grdf) {
-    # Some basic names must be present in order to make a map
-    if (!any(c("exon_id","transcript_id","gene_id") %in% names(grdf))
-        || any(is.na(grdf$exon_id))
-        || any(is.na(grdf$transcript_id))
-        || any(is.na(grdf$gene_id)))
-        return(NULL)
-
-    #hasGeneName <- hasBiotype <- FALSE
-    if (!all(is.na(grdf$gene_name)) && !all(is.na(grdf$gene_biotype))) {
-        map <- grdf[,c("exon_id","transcript_id","gene_id","gene_name",
-            "gene_biotype")]
-        names(map)[5] <- "biotype"
-        #hasGeneName <- hasBiotype <- TRUE
-    }
-    else if (all(is.na(grdf$gene_name)) && !all(is.na(grdf$gene_biotype))) {
-        map <- grdf[,c("exon_id","transcript_id","gene_id","gene_id",
-            "gene_biotype")]
-        names(map)[4:5] <- c("gene_name","biotype")
-        #hasBiotype <- TRUE
-    }
-    else if (!all(is.na(grdf$gene_name)) && all(is.na(grdf$gene_biotype))) {
-        map <- grdf[,c("exon_id","transcript_id","gene_id","gene_name")]
-        map$gene_biotype <- rep("gene",nrow(map))
-        names(map)[5] <- "biotype"
-        #hasGeneName <- TRUE
-    }
-    else {
-        map <- grdf[,c("exon_id","transcript_id","gene_id","gene_id")]
-        map$gene_biotype <- rep("gene",nrow(map))
-        names(map)[4:5] <- c("gene_name","biotype")
-    }
-    nag <- which(is.na(map$gene_name))
-    if (length(nag) > 0)
-        map$gene_name[nag] <- map$gene_id[nag]
-    nab <- which(is.na(map$biotype))
-    if (length(nab) > 0)
-        map$biotype[nag] <- "gene"
-    return(map)
-}
-
-.chromInfoFromBAM <- function(bam) {
-    # Danger of including non-canonical chromosomes
-    b <- scanBamHeader(bam)
-    ci <- as.data.frame(b[[bam]]$targets)
-    names(ci) <- "length"
-    return(ci)
-}
-
-.chromInfoFromSeqinfo <- function(sf) {
-    sf <- as.data.frame(sf)
-    sf <- sf[,1,drop=FALSE]
-    names(sf) <- "length"
-    return(sf)
-}
-
-.chromInfoToSeqInfoDf <- function(ci,o="custom",circ=FALSE,asSeqinfo=FALSE) {
-    if (asSeqinfo)
-        return(Seqinfo(seqnames=rownames(ci),seqlengths=ci[,1],
-            isCircular=rep(circ,nrow(ci)),genome=o))
-    else
-        return(data.frame(chromosome=rownames(ci),length=as.integer(ci[,1])))
-}
-
-.chromInfoWrapperGID <- function(o) {
-    if (packageVersion("GenomeInfoDb")>=1.23)
-        return(GenomeInfoDb::getChromInfoFromUCSC(o))
-    else
-        return(GenomeInfoDb::getChromInfoFromUCSC(o))
-}
-
-.validateEnsemblVersions <- function(o,v) {
-    ea <- biomaRt::listEnsemblArchives()
-    found <- as.character(v) %in% ea[,"version"]
-    if (any(!found)) {
-        nf <- which(!found)
-        warning("Version(s) ",paste0(v[nf],collapse=", ")," not found in ",
-            "biomaRt archives for current organism!\nWill use the latest ",
-            "available version(s)...",immediate.=TRUE)
-        newv <- v[-nf]
-        if (length(newv) == 0) {
-            warning("No Ensembl versions left after validation! Will return ",
-                "only the latest available...",immediate.=TRUE)
-            u2e <- .ucscToEnsembl()
-            vers <- u2e[[o]]
-            for (newv in rev(vers)) {
-                newi <- grep(as.character(newv),ea[,"version"])
-                if (length(newi) > 0)
-                    return(newv)
-            }
-        }
-        return(newv)
-    }
-    return(v)
-}
+.DFLT_DBPATH <- file.path(system.file(package="sitadela"),"annotation.sqlite")

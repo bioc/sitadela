@@ -47,6 +47,7 @@ Date: 2021-01-12
 Collate:
     'argcheck.R'
     'external.R'
+    'fromtxdb.R'
     'query-ensembl.R'
     'query-ncbi.R'
     'query-refseq.R'
@@ -54,3 +55,5 @@ Collate:
     'query-utils.R'
     'reduceops.R'
     'sitadela.R'
+    'testfuns.R'
+    'zzz.R'
