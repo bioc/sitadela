@@ -1,24 +1,22 @@
+test_sitadela_known <- function() {
+    testResult <- testKnownBuild("dm6","ensembl",102)
+    checkTrue(all(testResult))
+}
+
 test_sitadela_gtf <- function() {
-    # Load a dummy GTF
-    # Do some stuff
-    
-    # Do some checks
-    #checkTrue(is.list(test.tss))
-    #checkTrue(!is.null(test.tss$data))
+    testResult <- testCustomBuild()
+    checkTrue(all(testResult))
 }
 
 test_sitadela_ensembl <- function() {
-    # Run a quick query
-    
-    # Do some checks
-    #checkTrue(is.list(test.tss))
-    #checkTrue(!is.null(test.tss$data))
+    f <- testEnsemblSimple("mm10","gene")
+    checkTrue(is.null(f))
 }
 
 test_sitadela_ucsc <- function() {
-    # Run a quick query
-    
-    # Do some checks
-    #checkTrue(is.list(test.tss))
-    #checkTrue(!is.null(test.tss$data))
+    if (require(RMySQL))
+        f <- testUcsc("hg19","refseq","transcript",FALSE)
+    else
+        f <- NULL
+    checkTrue(is.null(f))
 }

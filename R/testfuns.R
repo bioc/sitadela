@@ -25,20 +25,20 @@ testKnownBuild <- function(org,refdb,ver=NULL) {
     }
     
     tmpdb <- tempfile()
+    testResult <- logical(2)
     
     message("Scheduling 2 tests")
     message("==================================================\n")
     message("Running test 1 of 2 scheduled")
     tryCatch({
-        #organisms <- list(mm9=67)
-        #organisms <- list(dm3=77)
-        #sources <- "ensembl"
         addAnnotation(organisms,sources,db=tmpdb,versioned=FALSE,
             forceDownload=TRUE,rc=NULL)
         genes <- loadAnnotation(genome=names(organisms)[1],refdb=sources[1],
             type="gene",db=tmpdb)
-        if (is(genes,"GRanges"))
+        if (is(genes,"GRanges")) {
             message("Test 1 successful!")
+            testResult[1] <- TRUE
+        }
     },error=function(e) {
         message("Test 1 failed with error:")
         message(e$message)
@@ -49,8 +49,10 @@ testKnownBuild <- function(org,refdb,ver=NULL) {
         org <- names(organisms)[1]
         refdb <- sources[1]
         n <- removeAnnotation(org,refdb,ver,db=tmpdb)
-        if (n > 0)
+        if (n > 0) {
             message("Test 2 successful!")
+            testResult[2] <- TRUE
+        }
     },error=function(e) {
         message("Test 2 failed with error:")
         message(e$message)
@@ -58,6 +60,8 @@ testKnownBuild <- function(org,refdb,ver=NULL) {
     
     message("Deleting temporary database ",tmpdb)
     unlink(tmpdb)
+    
+    return(testResult)
 }
 
 testCustomBuild <- function(gtf,metadata) {
@@ -75,6 +79,7 @@ testCustomBuild <- function(gtf,metadata) {
     }
     
     tmpdb <- tempfile()
+    testResult <- logical(2)
     
     message("Scheduling 2 tests")
     message("==================================================\n")
@@ -83,8 +88,10 @@ testCustomBuild <- function(gtf,metadata) {
         addCustomAnnotation(gtfFile=gtf,metadata=metadata,db=tmpdb)
         genes <- loadAnnotation(genome=metadata$organism,refdb=metadata$source,
             type="gene",db=tmpdb)
-        if (is(genes,"GRanges"))
+        if (is(genes,"GRanges")) {
             message("Test 1 successful!")
+            testResult[1] <- TRUE
+        }
     },error=function(e) {
         message("Test 1 failed with error:")
         message(e$message)
@@ -93,8 +100,10 @@ testCustomBuild <- function(gtf,metadata) {
     message("\nRunning test 2 of 2 scheduled")
     tryCatch({
         n <- removeAnnotation(metadata$organism,metadata$source,db=tmpdb)
-        if (n > 0)
+        if (n > 0) {
             message("Test 2 successful!")
+            testResult[2] <- TRUE
+        }
     },error=function(e) {
         message("Test 2 failed with error:")
         message(e$message)
@@ -102,6 +111,8 @@ testCustomBuild <- function(gtf,metadata) {
     
     message("Deleting temporary database ",tmpdb)
     unlink(tmpdb)
+    
+    return(testResult)
 }
 
 testUcscAll  <- function() {
@@ -224,8 +235,65 @@ testEnsembl <- function(level=c("normal","long","short"),versioned=FALSE) {
     message("Bye!\n")
 }
 
+testEnsemblSimple <- function(orgs,types,versioned=FALSE) {
+    nTests <- length(orgs)*length(types)
+    message("Scheduling ",nTests," tests")
+    message("==================================================\n")
+    
+    succ <- fail <- 0
+    failReasons <- rep(NA,nTests)
+    v <- NULL
+    
+    currTest <- 0
+    for (o in orgs) {
+        for (z in types) {
+            currTest <- currTest + 1
+            message("\nRunning test ",currTest," of ",nTests," scheduled")
+            message("Testing level ",z," from ",o," from latest version")
+            tryCatch({
+                ann <- getEnsemblAnnotation(o,z,v,versioned)
+                if (is(ann,"data.frame")) {
+                    message("Test ",currTest," successful!")
+                    message("Created ",nrow(ann)," features")
+                    message("Sample data:")
+                    print(head(ann))
+                    succ <- succ + 1
+                }
+            },error=function(e) {
+                message("Test ",currTest," failed with error:")
+                message(e$message)
+                fail <- fail + 1
+                failReasons[currTest] <- paste("Test ",currTest,":",
+                    message(e$message),sep="")
+            },finally="")
+        }
+    }
+    
+    message("Testing finished!\n")
+    message("Summary")
+    message("==================================================\n")
+    message("Succesful tests: ",succ," out of ",nTests)
+    message("Failed tests: ",fail," out of ",nTests)
+    message(" ")
+    
+    d <- which(is.na(failReasons))
+    if (length(d) == nTests) # All successful
+        return(NULL)
+    else {
+        message("Check the output for failure details")
+        if (length(d) > 0) # If not, all failed!
+            failReasons <- failReasons[-d]
+        return(failReasons)
+    }
+    message("Bye!\n")
+}
 
 testUcsc <- function(orgs,refdbs,types,versioned=FALSE) {
+    if (.Platform$OS.type != "unix") {
+        message("Cannot run 3' UTR tests from UCSC on non Unix/Linux machines!")
+        return(NULL)
+    }
+    
     nTests <- length(orgs)*length(refdbs)*length(types)
     message("Scheduling ",nTests," tests")
     message("==================================================\n")
@@ -297,6 +365,11 @@ testUcsc <- function(orgs,refdbs,types,versioned=FALSE) {
 }
 
 testUcscUtr <- function(orgs,refdbs,versioned=FALSE) {
+    if (.Platform$OS.type != "unix") {
+        message("Cannot run 3' UTR tests from UCSC on non Unix/Linux machines!")
+        return(NULL)
+    }
+    
     nTests <- length(orgs)*length(refdbs)
     message("Scheduling ",nTests," tests")
     message("==================================================\n")

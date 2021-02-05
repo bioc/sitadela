@@ -1045,7 +1045,8 @@ getAnnotation <- function(org,type,refdb="ensembl",ver=NULL,tv=FALSE,rc=NULL) {
     switch(refdb,
         ensembl = { return(getEnsemblAnnotation(org,type,ver,tv)) },
         ucsc = { return(getUcscAnnotation(org,type,refdb,tv,rc=rc)) },
-        refseq = { return(getUcscAnnotation(org,type,refdb,tv,rc=rc)) }
+        refseq = { return(getUcscAnnotation(org,type,refdb,tv,rc=rc)) },
+        ncbi = { return(getUcscAnnotation(org,type,refdb,tv,rc=rc)) }
     )
 }
 
@@ -1168,8 +1169,8 @@ getUcscAnnotation <- function(org,type,refdb="ucsc",versioned=FALSE,
         stop("R package RSQLite is required to use annotation from UCSC!")
     
     if (org=="tair10") {
-        warnwrap("Arabidopsis thaliana genome is not supported by UCSC Genome ",
-            "Browser database! Switching to Ensembl...")
+        warning("Arabidopsis thaliana genome is not supported by UCSC Genome ",
+            "Browser database! Switching to Ensembl...",immediate.=TRUE)
         return(getEnsemblAnnotation("tair10",type))
     }
     
