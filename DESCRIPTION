@@ -26,6 +26,7 @@ Imports:
 Suggests:
     BiocManager,
     BSgenome,
+    knitr,
     RMySQL,
     RUnit
 Description: Provides an interface to build a unified database of
