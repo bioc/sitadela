@@ -6,10 +6,6 @@ import(parallel)
 import(Rsamtools)
 import(RSQLite)
 
-importFrom("BiocGenerics",match)
-importFrom("BiocGenerics",unlist)
-importFrom("BiocGenerics",which)
-
 importFrom("Biostrings",alphabetFrequency)
 
 importFrom("GenomeInfoDb",dropSeqlevels)
@@ -42,6 +38,8 @@ importFrom("S4Vectors",Rle)
 importFrom("S4Vectors",queryHits)
 importFrom("S4Vectors",runValue)
 importFrom("S4Vectors",subjectHits)
+
+importFrom("stringr",str_match)
 
 importFrom("rtracklayer",import)
 
