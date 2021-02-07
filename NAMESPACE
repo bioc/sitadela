@@ -21,6 +21,7 @@ importFrom("GenomeInfoDb","seqlevelsStyle<-")
 
 importFrom("GenomicFeatures",makeTxDbFromGFF)
 importFrom("GenomicFeatures",exons)
+importFrom("GenomicFeatures",exonsBy)
 importFrom("GenomicFeatures",genes)
 importFrom("GenomicFeatures","seqlevels<-")
 importFrom("GenomicFeatures",transcripts)
@@ -35,7 +36,10 @@ importFrom("IRanges",slice)
 importFrom("S4Vectors",DataFrame)
 importFrom("S4Vectors",Rle)
 importFrom("S4Vectors",queryHits)
+importFrom("S4Vectors",runValue)
 importFrom("S4Vectors",subjectHits)
+
+importFrom("rtracklayer",import)
 
 importFrom("utils",download.file)
 importFrom("utils",head)

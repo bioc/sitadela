@@ -1616,13 +1616,13 @@ getSupportedUcscDbs <- function() {
 
 setDbPath <- function(db=NULL) {
     if (is.null(db))
-        db <- file.path(system.file(package="sitadela"),"annotation.sqlite")
+        db <- .defaultDbPath()
     else {
         if (!is.character(db)) {
             warning("The path to the sitadela database must be a valid path ",
                 "to a file which\nwill be created if not existing! Assuming ",
                 "default...",immediate..=TRUE)
-            db <- file.path(system.file(package="sitadela"),"annotation.sqlite")
+            db <- .defaultDbPath()
         }
     }
     
@@ -1642,7 +1642,7 @@ getDbPath <- function() {
     if (!is.null(db))
         return(db)
     else
-        return(file.path(system.file(package="sitadela"),"annotation.sqlite"))
+        return(.defaultDbPath())
 }
 
 importCustomGtf <- function(gtfFile,type=c("gene","transcript","utr",
@@ -2221,4 +2221,8 @@ cmclapply <- function(...,rc) {
         return(c(.getValidChrs(org),"chrM"))
     else
         return(.getValidChrs(org))
+}
+
+.defaultDbPath <- function() {
+    return(file.path(system.file(package="sitadela"),"annotation.sqlite"))
 }

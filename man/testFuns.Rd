@@ -1,5 +1,6 @@
 \name{testFuns}
 \alias{testEnsembl}
+\alias{testEnsemblSimple}
 \alias{testUcsc}
 \alias{testUcscAll}
 \alias{testUcscUtr}

@@ -30,7 +30,7 @@
     transcripts when/where available.}
     
     \item{db}{same as the \code{db} in 
-    \code{\link{buildAnnotationDatabase}}.}
+    \code{\link{addAnnotation}}.}
     
     \item{summarized}{if \code{TRUE}, retrieve summarized,
     non-overlaping elements where appropriate (e.g. exons).}
@@ -39,7 +39,7 @@
     (default \code{FALSE}).}
     
     \item{rc}{same as the \code{rc} in 
-    \code{\link{buildAnnotationDatabase}}.}
+    \code{\link{addAnnotation}}.}
 }
 \value{
     The function returns a \code{GenomicRanges} object or a
@@ -50,8 +50,8 @@
     sitadela annotation database. If the annotation is not
     found and the organism is supported, the annotation is 
     fetched and created on the fly but not imported in the 
-    local database. Use \code{buildAnnotationDatabase} for 
-    this purpose (build/update/add annotations).
+    local database. Use \code{addAnnotation} for this
+    purpose (build/update/add annotations).
 }
 \details{
     Regarding \code{org}, it can be, for human genomes 

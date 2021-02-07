@@ -27,7 +27,7 @@
     gene/transcript name. Defaults to \code{FALSE}.}
 
     \item{rc}{Fraction of cores to use. Same as the 
-    \code{rc} in \code{\link{buildAnnotationDatabase}}.}
+    \code{rc} in \code{\link{addAnnotation}}.}
 }
 \value{
     A data frame with the canonical genes, transcripts, 

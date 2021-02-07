@@ -34,7 +34,7 @@ Description: Provides an interface to build a unified database of
     and exon levels) to be used when simple tab-delimited such
     annotations (or simple GRanges objects) are required instead
     of the more complex annotation Bioconductor packages.
-License: GPL (>= 3)
+License: GPL (>= 3) + file LICENSE
 Encoding: UTF-8
 LazyData: false
 URL: http://www.fleming.gr
