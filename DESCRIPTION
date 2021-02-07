@@ -21,6 +21,7 @@ Imports:
     parallel,
     Rsamtools,
     RSQLite,
+    rtracklayer,
     S4Vectors,
     utils
 Suggests:

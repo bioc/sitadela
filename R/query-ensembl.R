@@ -467,7 +467,7 @@
 }
 
 .checkUcscToEnsembl <- function(org,ver) {
-    u2e <- getUcscToEnsembl()
+    u2e <- .getUcscToEnsembl()
     return(ver %in% u2e[[org]])
 }
 

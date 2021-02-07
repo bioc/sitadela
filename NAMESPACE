@@ -6,6 +6,10 @@ import(parallel)
 import(Rsamtools)
 import(RSQLite)
 
+importFrom("BiocGenerics",match)
+importFrom("BiocGenerics",unlist)
+importFrom("BiocGenerics",which)
+
 importFrom("Biostrings",alphabetFrequency)
 
 importFrom("GenomeInfoDb",dropSeqlevels)
