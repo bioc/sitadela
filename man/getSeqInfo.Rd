@@ -9,7 +9,7 @@
     (aka chromosome) information for. See also 
     \code{\link{addAnnotation}} about supported organisms.}
 
-    \item{asSeqInfo}{return a \code{Seqinfo} object or a
+    \item{asSeqinfo}{return a \code{Seqinfo} object or a
     \code{data.frame}.}
 }
 \value{

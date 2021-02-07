@@ -33,7 +33,7 @@
 }
 \examples{
 # Dummy database as example
-customDir <- file.path(tempdir(),"test_custom")
+customDir <- file.path(tempdir(),"test_remove")
 dir.create(customDir)
 
 myDb <- file.path(customDir,"testann.sqlite")
@@ -44,7 +44,7 @@ chromInfo <- data.frame(length=c(1000L,2000L,1500L),
 if (.Platform$OS.type == "unix") {
     addCustomAnnotation(
         gtfFile=file.path(system.file(package="sitadela"),
-            "dummy.gtf"),
+            "dummy.gtf.gz"),
         metadata=list(
             organism="dummy",
             source="dummy_db",
