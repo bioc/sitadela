@@ -2,7 +2,7 @@
 \alias{getSeqInfo}
 \title{Retrieve sequence length and other information}
 \usage{
-    getSeqInfo(org, asSeqInfo = FALSE)
+    getSeqInfo(org, asSeqinfo = FALSE)
 }
 \arguments{
     \item{org}{a supported organism to retrieve sequence

@@ -67,7 +67,6 @@ testKnownBuild <- function(org,refdb,ver=NULL) {
 testCustomBuild <- function(gtf,metadata) {
     if (missing(gtf) || missing(metadata)) {
         gtf <- file.path(system.file(package="sitadela"),"dummy.gtf.gz")
-        #gtf <- "dummy.gtf.gz"
         chromInfo <- data.frame(length=c(1000L,2000L,1500L),
             row.names=c("A","B","C"))
         metadata=list(
