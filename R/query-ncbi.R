@@ -180,7 +180,7 @@
 .getUcscQueryNcbiGene <- function(org) {
     switch(org,
         hg18 = {
-             warning("No NCBI RefSeq Genome annotation for Homo ",
+            warning("No NCBI RefSeq Genome annotation for Homo ",
                 "sapiens hg18! Will use UCSC RefSeq instead...",
                 immediate.=TRUE)
             return(paste("SELECT refFlat.chrom AS `chromosome`,",

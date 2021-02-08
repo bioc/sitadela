@@ -29,7 +29,7 @@
     
     gr$gc_content = rep(50,length(gr))
     ann <- as.data.frame(gr)
-    ann <- ann[,c(1:3,6,9,5,7,8)]
+    ann <- ann[,c(1,2,3,6,9,5,7,8)]
     names(ann)[1] <- "chromosome"
     ann$chromosome <- as.character(ann$chromosome)
     ann <- ann[order(ann$chromosome,ann$start),]

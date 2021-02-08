@@ -33,9 +33,11 @@ Suggests:
     RUnit
 Description: Provides an interface to build a unified database of
     genomic annotations and their coordinates (gene, transcript
-    and exon levels) to be used when simple tab-delimited such
-    annotations (or simple GRanges objects) are required instead
-    of the more complex annotation Bioconductor packages.
+    and exon levels). It is aimed to be used when simple 
+    tab-delimited annotations (or simple GRanges objects) are 
+    required instead of the more complex annotation Bioconductor 
+    packages. Also useful when combinatorial annotation elements
+    are reuired, such as RefSeq coordinates with Ensembl biotypes.
 License: GPL (>= 3) + file LICENSE
 Encoding: UTF-8
 LazyData: false
