@@ -196,24 +196,22 @@ a `GRanges` object by default.
 
 ```{r example-2, eval=TRUE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
 # Load standard annotation based on gene body coordinates
-genes <- loadAnnotation(genome="mm9",refdb="ensembl",level="gene",type="gene",
-    db=myDb)
+genes <- loadAnnotation(genome="mm9",refdb="ensembl",type="gene",db=myDb)
 genes
 
 # Load standard annotation based on 3' UTR coordinates
-utrs <- loadAnnotation(genome="mm9",refdb="ensembl",level="gene",type="utr",
-    db=myDb)
+utrs <- loadAnnotation(genome="mm9",refdb="ensembl",type="utr",db=myDb)
 utrs
 
 # Load summarized exon annotation based used with RNA-Seq analysis
-sumEx <- loadAnnotation(genome="mm9",refdb="ensembl",level="gene",type="exon",
+sumEx <- loadAnnotation(genome="mm9",refdb="ensembl",type="exon",
     summarized=TRUE,db=myDb)
 sumEx
 
 # Load standard annotation based on gene body coordinates from RefSeq
 if (.Platform$OS.type=="unix") {
-    refGenes <- loadAnnotation(genome="mm9",refdb="refseq",level="gene",
-        type="gene",db=myDb)
+    refGenes <- loadAnnotation(genome="mm9",refdb="refseq",type="gene",
+        db=myDb)
     refGenes
 }
 ```
@@ -223,8 +221,8 @@ not contain metadata like `Seqinfo` to be used for any susequent validations:
 
 ```{r example-3, eval=TRUE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
 # Load standard annotation based on gene body coordinates
-genes <- loadAnnotation(genome="mm9",refdb="ensembl",level="gene",type="gene",
-    db=myDb,asdf=TRUE)
+genes <- loadAnnotation(genome="mm9",refdb="ensembl",type="gene",db=myDb,
+    asdf=TRUE)
 head(genes)
 ```
 
@@ -309,7 +307,7 @@ if (.Platform$OS.type == "unix" && !grepl("^darwin",R.version$os)) {
 
     # Try to retrieve some data
     eboGenes <- loadAnnotation(genome="eboVir3_test",refdb="ucsc_test",
-        level="gene",type="gene",db=myDb)
+        type="gene",db=myDb)
     eboGenes
 }
 ```
@@ -366,7 +364,7 @@ if (.Platform$OS.type == "unix") {
 
     # Try to retrieve some data
     gadGenes <- loadAnnotation(genome="gadMor1_test",refdb="ucsc_test",
-        level="gene",type="gene",db=myDb)
+        type="gene",db=myDb)
     gadGenes
 }
 ```
@@ -402,7 +400,7 @@ addCustomAnnotation(
 
 # Try to retrieve some data
 dasGenes <- loadAnnotation(genome="dasNov3_test",refdb="ensembl_test",
-    level="gene",type="gene",db=myDb)
+    type="gene",db=myDb)
 dasGenes
 ```
 

@@ -1004,28 +1004,6 @@ removeAnnotation <- function(org,refdb,ver=NULL,db=NULL) {
     return(nr)
 }
 
-.dropAnnotation <- function(con,o,s,v,t,h) {
-    # At least organism must exist
-    if (missing(o))
-        stop("At least an organism name must be provided for deletion!")
-    # A basic deletion query based on organism. Since the content table is
-    # connected with the rest through foreing keys, deletion from there should
-    # be enough.
-    query <- paste("DELETE FROM content WHERE organism='",o,"'",sep="")
-    # Augment according to given arguments.
-    if (!missing(s))
-        query <- paste(query," AND source='",s,"'",sep="")
-    if (!missing(v))
-        query <- paste(query," AND version=",v,sep="")
-    if (!missing(t))
-        query <- paste(query," AND type='",t,"'",sep="")
-    if (!missing(h))
-        query <- paste(query," AND has_tv=",h,sep="")
-    # Execute
-    nr <- dbExecute(con,query)
-    return(nr)
-}
-
 getInstalledAnnotations <- function(obj=NULL) {
     con <- .validateDbCon(obj)
     content <- .browseContent(con)

@@ -23,6 +23,7 @@ Imports:
     RSQLite,
     rtracklayer,
     S4Vectors,
+    stringr,
     utils
 Suggests:
     BiocManager,
@@ -45,7 +46,7 @@ biocViews: Software, WorkflowStep, RNASeq, Transcription, Sequencing,
 VignetteBuilder: knitr
 BugReports: https://github.com/pmoulos/sitadela/issues
 Version: 0.0.1
-Date: 2021-02-07
+Date: 2021-02-08
 Collate:
     'argcheck.R'
     'external.R'
