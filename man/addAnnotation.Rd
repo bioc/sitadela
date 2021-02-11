@@ -3,7 +3,8 @@
 \title{Build a local genomic regions annotation database}
 \usage{
     addAnnotation(organisms, sources, db = getDbPath(),
-        versioned = FALSE, forceDownload = TRUE, rc = NULL)
+        versioned = FALSE, forceDownload = TRUE, retries = 5,
+        rc = NULL)
 }
 \arguments{
     \item{organisms}{a list of organisms and versions
@@ -30,6 +31,10 @@
     existing annotation again (\code{FALSE}). Set to 
     \code{TRUE} if you wish to update the annotation 
     database for a particular version.}
+    
+    \item{retries}{how many times should the annotation
+    worker try to re-connect to internet resources in case
+    of a connection problem or failure.}
 
     \item{rc}{fraction (0-1) of cores to use in a multicore 
     system. It defaults to \code{NULL} (no parallelization).

@@ -1,4 +1,54 @@
 addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
+    forceDownload=TRUE,retries=5,rc=NULL) {
+    
+    complete <- FALSE
+    times <- 1
+    pv <- tryCatch(packageVersion("sitadela"),error=function(e) return(""),
+        finally="")
+    
+    message("\n********************************************************")
+    message("This is sitadela ",pv," genomic region annotation builder")
+    message("********************************************************")
+    while(!complete && times<=retries) {
+        message("\n========================================================")
+        message(format(Sys.time(),"%Y-%m-%d %H:%M:%S")," - Try ",times)
+        message("========================================================\n")
+       
+        buildResult <- .annotationWorker(organisms=organisms,sources=sources,
+            db=db,versioned=versioned,forceDownload=forceDownload,rc=rc)
+       
+        complete <- buildResult$complete
+       
+        if (!complete) {
+            message("-------------------------------------------------------")
+            message("Failed annotation builds:")
+            for (i in seq_along(buildResult$failed))
+                message("  -> Organism: ",buildResult$failed[[i]]$org," - ",
+                    "Source: ",buildResult$failed[[i]]$refdb," - ",
+                    "Version: ",buildResult$failed[[i]]$ver," - ",
+                    "Versioned IDs: ",buildResult$failed[[i]]$tv)
+            message("Will retry ",retries-times," times...")
+            
+            newRun <- .collapseFailures(buildResult$failed)
+            .annotationWorker(organisms=newRun$organisms,
+                sources=newRun$sources,db=db,versioned=versioned,
+                forceDownload=forceDownload,rc=rc)
+            message("-------------------------------------------------------\n")
+        }
+        else {
+            message("\n-------------------------------------------------------")
+            message("Building process complete!")
+            message("-------------------------------------------------------\n")
+        }
+       
+        times <- times + 1
+    }
+    
+    #.annotationWorker(organisms=organisms,sources=sources,db=db,
+    #    versioned=versioned,forceDownload=forceDownload,rc=rc)
+}
+
+.annotationWorker <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
     forceDownload=TRUE,rc=NULL) {
     if (missing(organisms))
         organisms <- getSupportedOrganisms()
@@ -41,6 +91,11 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
     message("Opening sitadela SQLite database ",db)
     con <- initDatabase(db)
     
+    # Main fault (connection or other) marker
+    completed <- TRUE
+    failures <- 0
+    failed <- list()
+    
     for (s in sources) {
         for (o in organisms) {
             # Retrieving genome info. We will be inserting the seqinfo to the
@@ -80,26 +135,35 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
                 else {
                     message("Retrieving gene annotation for ",o," from ",s,
                         " version ",v)
-                    ann <- getAnnotation(o,"gene",refdb=s,ver=v,tv=versioned,
-                        rc=rc)
+                    tryCatch({
+                        ann <- getAnnotation(o,"gene",refdb=s,ver=v,
+                            tv=versioned,rc=rc)
                     
-                    # First drop if previously exists
-                    nr <- .dropAnnotation(con,o,s,v,"gene",versioned)
-                    # Then insert to the contents table so as to get the content
-                    # id to attach in the annotation table
-                    nr <- .insertContent(con,o,s,v,"gene",versioned)
-                    nid <- .annotationExists(con,o,s,v,"gene",versioned,
-                        out="id")
-                    # If something happens, the whole procedure will break
-                    # anyway
-                    # Add content_id
-                    ann$content_id <- rep(nid,nrow(ann))
-                    sfGene <- sf
-                    sfGene$content_id <- rep(nid,nrow(sfGene))
-                    # Write genes and seqinfo
-                    dbWriteTable(con,"gene",ann,row.names=FALSE,append=TRUE)
-                    dbWriteTable(con,"seqinfo",sfGene,row.names=FALSE,
-                        append=TRUE)
+                        # First drop if previously exists
+                        nr <- .dropAnnotation(con,o,s,v,"gene",versioned)
+                        # Then insert to the contents table so as to get the 
+                        # content id to attach in the annotation table
+                        nr <- .insertContent(con,o,s,v,"gene",versioned)
+                        nid <- .annotationExists(con,o,s,v,"gene",versioned,
+                            out="id")
+                        # If something happens, the whole procedure will break
+                        # anyway
+                        # Add content_id
+                        ann$content_id <- rep(nid,nrow(ann))
+                        sfGene <- sf
+                        sfGene$content_id <- rep(nid,nrow(sfGene))
+                        # Write genes and seqinfo
+                        dbWriteTable(con,"gene",ann,row.names=FALSE,append=TRUE)
+                        dbWriteTable(con,"seqinfo",sfGene,row.names=FALSE,
+                            append=TRUE)
+                    },error=function(e) {
+                        message("Possible connection failure! Marking...")
+                        message("Caught error: ",e$message)
+                        completed <- FALSE
+                        failures <- failures + 1
+                        failed[[failures]] <- 
+                            list(org=o,refdb=s,ver=v,tv=versioned)
+                    },finally="")
                 }
                 
                 # Retrieve transcript annotations
@@ -110,21 +174,30 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
                         "skipped.\nIf you wish to recreate it choose ",
                         "forceDownload = TRUE.")
                 else {
-                    message("Retrieving transcript annotation for ",o,
-                        " from ",s," version ",v)
-                    ann <- getAnnotation(o,"transcript",refdb=s,ver=v,
-                        tv=versioned,rc=rc)
-                    nr <- .dropAnnotation(con,o,s,v,"transcript",versioned)
-                    nr <- .insertContent(con,o,s,v,"transcript",versioned)
-                    nid <- .annotationExists(con,o,s,v,"transcript",versioned,
-                        out="id")
-                    ann$content_id <- rep(nid,nrow(ann))
-                    sfTranscript <- sf
-                    sfTranscript$content_id <- rep(nid,nrow(sfTranscript))
-                    dbWriteTable(con,"transcript",ann,row.names=FALSE,
-                        append=TRUE)
-                    dbWriteTable(con,"seqinfo",sfTranscript,row.names=FALSE,
-                        append=TRUE)
+                    message("Retrieving transcript annotation for ",o," from ",
+                        s," version ",v)
+                    tryCatch({
+                        ann <- getAnnotation(o,"transcript",refdb=s,ver=v,
+                            tv=versioned,rc=rc)
+                        nr <- .dropAnnotation(con,o,s,v,"transcript",versioned)
+                        nr <- .insertContent(con,o,s,v,"transcript",versioned)
+                        nid <- .annotationExists(con,o,s,v,"transcript",
+                            versioned,out="id")
+                        ann$content_id <- rep(nid,nrow(ann))
+                        sfTranscript <- sf
+                        sfTranscript$content_id <- rep(nid,nrow(sfTranscript))
+                        dbWriteTable(con,"transcript",ann,row.names=FALSE,
+                            append=TRUE)
+                        dbWriteTable(con,"seqinfo",sfTranscript,row.names=FALSE,
+                            append=TRUE)
+                    },error=function(e) {
+                        message("Possible connection failure! Marking...")
+                        message("Caught error: ",e$message)
+                        completed <- FALSE
+                        failures <- failures + 1
+                        failed[[failures]] <- 
+                            list(org=o,refdb=s,ver=v,tv=versioned)
+                    },finally="")
                 }
                 
                 # Then summarize the transcripts and write again with type 
@@ -140,9 +213,8 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
                         stop("Transcript annotation for ",o," from ",s,
                             " version ",v," is required in order to build ",
                             "predefined merged transcript regions for read ",
-                            "counting.\nPlease rerun the ",
-                            "addAnnotation function with ",
-                            "appropriate parameters.")
+                            "counting.\nPlease rerun the addAnnotation ",
+                            "function with appropriate parameters.")
                     annGr <- .loadPrebuiltAnnotation(con,o,s,v,"transcript")
                     message("Merging transcripts for ",o," from ",s,
                         " version ",v)
@@ -175,20 +247,30 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
                         v," has already been created and will be skipped.\nIf ",
                         "you wish to recreate it choose forceDownload = TRUE.")
                 else {
-                    message("Retrieving 3' UTR annotation for ",o,
-                        " from ",s," version ",v)
-                    ann <- getAnnotation(o,"utr",refdb=s,ver=v,tv=versioned,
-                        rc=rc)
-                    nr <- .dropAnnotation(con,o,s,v,"utr",versioned)
-                    nr <- .insertContent(con,o,s,v,"utr",versioned)
-                    nid <- .annotationExists(con,o,s,v,"utr",versioned,out="id")
-                    ann$content_id <- rep(nid,nrow(ann))
-                    sfUtr <- sf
-                    sfUtr$content_id <- rep(nid,nrow(sfUtr))
-                    dbWriteTable(con,"utr",ann,row.names=FALSE,
-                        append=TRUE)
-                    dbWriteTable(con,"seqinfo",sfUtr,row.names=FALSE,
-                        append=TRUE)
+                    message("Retrieving 3' UTR annotation for ",o," from ",s,
+                        " version ",v)
+                    tryCatch({
+                        ann <- getAnnotation(o,"utr",refdb=s,ver=v,tv=versioned,
+                            rc=rc)
+                        nr <- .dropAnnotation(con,o,s,v,"utr",versioned)
+                        nr <- .insertContent(con,o,s,v,"utr",versioned)
+                        nid <- .annotationExists(con,o,s,v,"utr",versioned,
+                            out="id")
+                        ann$content_id <- rep(nid,nrow(ann))
+                        sfUtr <- sf
+                        sfUtr$content_id <- rep(nid,nrow(sfUtr))
+                        dbWriteTable(con,"utr",ann,row.names=FALSE,
+                            append=TRUE)
+                        dbWriteTable(con,"seqinfo",sfUtr,row.names=FALSE,
+                            append=TRUE)
+                    },error=function(e) {
+                        message("Possible connection failure! Marking...")
+                        message("Caught error: ",e$message)
+                        completed <- FALSE
+                        failures <- failures + 1
+                        failed[[failures]] <- 
+                            list(org=o,refdb=s,ver=v,tv=versioned)
+                    },finally="")
                 }
                 
                 # Then summarize the 3'utrs per gene and write again with type 
@@ -309,19 +391,28 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
                 else {
                     message("Retrieving exon annotation for ",o," from ",s,
                         " version ",v)
-                    ann <- getAnnotation(o,"exon",refdb=s,ver=v,tv=versioned,
-                        rc=rc)
-                    nr <- .dropAnnotation(con,o,s,v,"exon",versioned)
-                    nr <- .insertContent(con,o,s,v,"exon",versioned)
-                    nid <- .annotationExists(con,o,s,v,"exon",versioned,
-                        out="id")
-                    ann$content_id <- rep(nid,nrow(ann))
-                    sfExon <- sf
-                    sfExon$content_id <- rep(nid,nrow(sfExon))
-                    dbWriteTable(con,"exon",ann,row.names=FALSE,
-                        append=TRUE)
-                    dbWriteTable(con,"seqinfo",sfExon,row.names=FALSE,
-                        append=TRUE)
+                    tryCatch({
+                        ann <- getAnnotation(o,"exon",refdb=s,ver=v,
+                            tv=versioned,rc=rc)
+                        nr <- .dropAnnotation(con,o,s,v,"exon",versioned)
+                        nr <- .insertContent(con,o,s,v,"exon",versioned)
+                        nid <- .annotationExists(con,o,s,v,"exon",versioned,
+                            out="id")
+                        ann$content_id <- rep(nid,nrow(ann))
+                        sfExon <- sf
+                        sfExon$content_id <- rep(nid,nrow(sfExon))
+                        dbWriteTable(con,"exon",ann,row.names=FALSE,
+                            append=TRUE)
+                        dbWriteTable(con,"seqinfo",sfExon,row.names=FALSE,
+                            append=TRUE)
+                    },error=function(e) {
+                        message("Possible connection failure! Marking...")
+                        message("Caught error: ",e$message)
+                        completed <- FALSE
+                        failures <- failures + 1
+                        failed[[failures]] <- 
+                            list(org=o,refdb=s,ver=v,tv=versioned)
+                    },finally="")
                 }
                 
                 # Retrieve extended annotations
@@ -334,19 +425,28 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
                 else {
                     message("Retrieving extended exon annotation for ",o,
                         " from ",s," version ",v)
-                    ann <- getAnnotation(o,"transexon",refdb=s,ver=v,
-                        tv=versioned,rc=rc)
-                    nr <- .dropAnnotation(con,o,s,v,"transexon",versioned)
-                    nr <- .insertContent(con,o,s,v,"transexon",versioned)
-                    nid <- .annotationExists(con,o,s,v,"transexon",versioned,
-                        out="id")
-                    ann$content_id <- rep(nid,nrow(ann))
-                    sfTrExon <- sf
-                    sfTrExon$content_id <- rep(nid,nrow(sfExon))
-                    dbWriteTable(con,"transexon",ann,row.names=FALSE,
-                        append=TRUE)
-                    dbWriteTable(con,"seqinfo",sfTrExon,row.names=FALSE,
-                        append=TRUE)
+                    tryCatch({
+                        ann <- getAnnotation(o,"transexon",refdb=s,ver=v,
+                            tv=versioned,rc=rc)
+                        nr <- .dropAnnotation(con,o,s,v,"transexon",versioned)
+                        nr <- .insertContent(con,o,s,v,"transexon",versioned)
+                        nid <- .annotationExists(con,o,s,v,"transexon",
+                            versioned,out="id")
+                        ann$content_id <- rep(nid,nrow(ann))
+                        sfTrExon <- sf
+                        sfTrExon$content_id <- rep(nid,nrow(sfExon))
+                        dbWriteTable(con,"transexon",ann,row.names=FALSE,
+                            append=TRUE)
+                        dbWriteTable(con,"seqinfo",sfTrExon,row.names=FALSE,
+                            append=TRUE)
+                    },error=function(e) {
+                        message("Possible connection failure! Marking...")
+                        message("Caught error: ",e$message)
+                        completed <- FALSE
+                        failures <- failures + 1
+                        failed[[failures]] <- 
+                            list(org=o,refdb=s,ver=v,tv=versioned)
+                    },finally="")
                 }
                 
                 # Then summarize the exons per gene and write again with type 
@@ -458,6 +558,11 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
     }
     
     dbDisconnect(con)
+    
+    return(list(
+        completed=completed,
+        failed=failed
+    ))
 }
 
 # GTF only!
@@ -2203,4 +2308,30 @@ cmclapply <- function(...,rc) {
 
 .defaultDbPath <- function() {
     return(file.path(system.file(package="sitadela"),"annotation.sqlite"))
+}
+
+.collapseFailures <- function(f) {
+    df <- data.frame(
+        org=vapply(f,function(x) return(x$org),character(1)),
+        refdb=vapply(f,function(x) return(x$refdb),character(1)),
+        ver=vapply(f,function(x) return(x$ver),numeric(1)),
+        tv=vapply(f,function(x) return(x$tv),logical(1))
+    )
+    
+    uorgs <- unique(df$org)
+    organisms <- vector("list",length(uorgs))
+    names(organisms) <- uorgs
+    for (o in uorgs) {
+        organisms[[o]] <- 
+            df$ver[which(df$org==o & df$refdb=="ensembl")]
+        if (length(organisms[[o]]) == 0) {
+            # Not an Ensembl failure, but there must be a version
+            # which will be ignored during the build unless
+            # forceDownload = TRUE
+            vs <- .getUcscToEnsembl(o)
+            organisms[[o]] <- vs[length(vs)]
+        }
+    }
+    
+    return(list(organisms=organisms,sources=unique(df$refdb)))
 }

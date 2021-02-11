@@ -238,8 +238,8 @@ annotations
 * Any other case where the provided annotations are not adequate
 
 This can be achieved through the usage of
-[GTF](https://www.ensembl.org/info/website/upload/gff.html) files, along with
-some simple metadata that you have to provide for proper import to the
+[GTF/GFF](https://www.ensembl.org/info/website/upload/gff.html) files, along 
+with some simple metadata that you have to provide for proper import to the
 annotation database. This can be achieved through the usage of the
 `addCustomAnnotation` function. Details on required metadata can be found
 in the function's help page.
@@ -248,10 +248,43 @@ in the function's help page.
 directly from UCSC (UCSC SQL database dumps) is not supported in Windows as the
 process involves using the `genePredToGtf` which is not available for Windows.
 
-Let's try a couple of exammples. The first one is a custom annotation for the
-Ebola virus from UCSC:
+Let's try a couple of examples. The first one uses example GTF files shipped
+with the package. These are sample chromosomes from:
+
+* Atlantic cod (*Gadus morhua*), sequence HE567025
+* Armadillo (*Dasypus novemcinctus*), sequence JH569334
+* European bass (*Dicentrarchus labrax*), chromosome LG3
+
+Below, we test custom building with reference sequence HE567025 of Atlantic cod:
 
 ```{r example-4, eval=TRUE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
+gtf <- file.path(system.file(package="sitadela","extdata",
+    "gadMor1_HE567025.gtf.gz"))
+chrom <- file.path(system.file(package="sitadela","extdata",
+    "gadMor1_HE567025.txt.gz"))
+chromInfo <- read.delim(chrom,header=FALSE,row.names=1)
+names(chromInfo) <- "length"
+metadata <- list(
+    organism="gadMor1_HE567025",
+    source="sitadela_package",
+    chromInfo=chromInfo
+)
+tmpdb <- tempfile()
+
+addCustomAnnotation(gtfFile=gtf,metadata=metadata,db=tmpdb)
+
+# Try to retrieve some data
+g <- loadAnnotation(genome="gadMor1_HE567025",refdb="sitadela_package",
+    type="gene",db=tmpdb)
+g
+
+# Delete the temporary database
+unlink(tmpdb)
+```
+
+The next one is a custom annotation for the Ebola virus from UCSC:
+
+```{r example-5, eval=TRUE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
 # Setup a temporary directory to download files etc.
 customDir <- file.path(tempdir(),"test_custom")
 dir.create(customDir)
@@ -312,10 +345,10 @@ if (.Platform$OS.type == "unix" && !grepl("^darwin",R.version$os)) {
 }
 ```
 
-Another example, the Atlantic cod from UCSC. The same things apply for the
-operating system.
+Another example, the full Atlantic cod genome annotation from UCSC. The same 
+things apply for the operating system.
 
-```{r example-5, eval=FALSE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
+```{r example-6, eval=FALSE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
 if (.Platform$OS.type == "unix") {
     # Gene annotation dump
     download.file(paste0(goldenPath,"gadMor1/database/augustusGene.txt.gz"),
@@ -372,7 +405,7 @@ if (.Platform$OS.type == "unix") {
 Another example, Armadillo from Ensembl. This should work irrespectively of 
 operating system. We are downloading chromosomal information from UCSC.
 
-```{r example-6, eval=FALSE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
+```{r example-7, eval=FALSE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
 # Gene annotation dump from Ensembl
 download.file(paste0("ftp://ftp.ensembl.org/pub/release-98/gtf/",
     "dasypus_novemcinctus/Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz"),
@@ -409,28 +442,29 @@ dasGenes
 A quite complete build (with latest versions of Ensembl annotations) would look
 like (supposing the default annotation database location):
 
-```{r example-7, eval=FALSE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
+```{r example-8, eval=FALSE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
 organisms <- list(
     hg18=67,
     hg19=75,
-    hg38=97:98,
+    hg38=101:102,
     mm9=67,
-    mm10=97:98,
-    rn5=79,
-    rn6=97:98,
-    dm3=78,
-    dm6=97:98,
-    danrer7=79,
+    mm10=101:102,
+    rn5=77,
+    rn6=101:102,
+    dm3=77,
+    dm6=101:102,
+    danrer7=77,
     danrer10=91,
-    danrer11=97:98,
+    danrer11=101:102,
     pantro4=90,
-    pantro5=97:98,
+    pantro5=101:102,
     susscr3=89,
-    susscr11=97:98,
-    equcab2=97:98
+    susscr11=101:102,
+    equcab2=94,
+    equcab3=101:102
 )
 
-sources <- c("ensembl","ucsc","refseq")
+sources <- c("ensembl","ucsc","refseq","ncbi")
 
 addAnnotation(organisms,sources,forceDownload=FALSE,rc=0.5)
 ```

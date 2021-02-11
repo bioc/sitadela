@@ -123,15 +123,11 @@
                     .getUcscTblTpl("ensemblSource",what)
             ))
         },
-        #pantro6 = {
-        #    return(list(
-        #        refFlat=.getUcscTblTpl("refFlat",what),
-        #        ensemblToGeneName=
-        #            .getUcscTblTpl("ensemblToGeneName",what),
-        #        ensemblSource=
-        #            .getUcscTblTpl("ensemblSource",what)
-        #    ))
-        #},
+        pantro6 = {
+            return(list(
+                ncbiRefSeq=.getUcscTblTpl("ncbiRefSeq",what)
+            ))
+        },
         susscr3 = {
             warning("No NCBI RefSeq Genome annotation for Sus scrofa v3! ",
                 "Will use UCSC RefSeq instead...",
@@ -415,6 +411,28 @@
                 "ORDER BY `chromosome`,`start`) AS tmp"))
         },
         pantro5 = {
+            warning("No NCBI RefSeq Genome annotation for Pan troglodytes ",
+                "pantro5! Will use UCSC RefSeq instead...",
+                immediate.=TRUE)
+            return(paste("SELECT `chromosome`,`start`,`end`,`gene_id`,",
+                "`gc_content`,`strand`,`gene_name`,`biotype` FROM",
+                "(SELECT MAX(`txEnd` - `txStart`) AS `width`,",
+                "refFlat.chrom AS `chromosome`,",
+                "`txStart` AS `start`,",
+                "`txEnd` AS `end`,",
+                "refFlat.name AS `gene_id`,",
+                "0 AS `gc_content`,",
+                "refFlat.strand AS `strand`,",
+                "`geneName` AS `gene_name`,",
+                "`source` AS `biotype`",
+                "FROM `refFlat` INNER JOIN `ensemblToGeneName`", 
+                "ON refFlat.geneName=ensemblToGeneName.value",
+                "INNER JOIN `ensemblSource`",
+                "ON ensemblToGeneName.name=ensemblSource.name",
+                "GROUP BY `gene_name`",
+                "ORDER BY `chromosome`,`start`) AS tmp"))
+        },
+        pantro6 = {
             return(paste(
                 "SELECT `chrom` AS `chromosome`,",
                 "`txStart` AS `start`,",
@@ -710,6 +728,24 @@
                 "ORDER BY `chromosome`,`start`"))
         },
         pantro5 = {
+            warning("No NCBI RefSeq Genome annotation for Pan troglodytes ",
+                "pantro5! Will use UCSC RefSeq instead...",
+                immediate.=TRUE)
+            return(paste("SELECT refFlat.chrom AS `chromosome`,",
+                "refFlat.txStart AS `start`,",
+                "refFlat.txEnd AS `end`,",
+                "refFlat.name AS `transcript_id`,",
+                "refFlat.strand AS `strand`,",
+                "`geneName` AS `gene_name`,",
+                "`source` AS `biotype`",
+                "FROM `refFlat` INNER JOIN `ensemblToGeneName`", 
+                "ON refFlat.geneName=ensemblToGeneName.value",
+                "INNER JOIN `ensemblSource`",
+                "ON ensemblToGeneName.name=ensemblSource.name",
+                "GROUP BY `transcript_id`",
+                "ORDER BY `chromosome`,`start`"))
+        },
+        pantro6 = {
             return(paste("SELECT `chrom` AS `chromosome`,",
                 "`txStart` AS `start`,",
                 "`txEnd` AS `end`,",
@@ -1028,6 +1064,28 @@
                 "ORDER BY `chromosome`,`start`) AS tmp"))
         },
         pantro5 = {
+            warning("No NCBI RefSeq Genome annotation for Pan troglodytes ",
+                "pantro5! Will use UCSC RefSeq instead...",
+                immediate.=TRUE)
+            return(paste("SELECT `chromosome`,`start`,`end`,`exon_id`,",
+                "`strand`,`gene_id`,`gene_name`,`biotype` FROM",
+                "(SELECT MAX(`txEnd` - `txStart`) AS `width`,",
+                "refFlat.chrom AS `chromosome`,",
+                "refFlat.exonStarts AS `start`,",
+                "refFlat.exonEnds AS `end`,",
+                "refFlat.name AS `exon_id`,",
+                "refFlat.strand AS `strand`,",
+                "refFlat.name AS `gene_id`,",
+                "`geneName` AS `gene_name`,",
+                "`source` AS `biotype`",
+                "FROM `refFlat` INNER JOIN `ensemblToGeneName`", 
+                "ON ensemblToGeneName.value=refFlat.geneName",
+                "INNER JOIN `ensemblSource`",
+                "ON ensemblToGeneName.name=ensemblSource.name", 
+                "GROUP BY `gene_name`",
+                "ORDER BY `chromosome`,`start`) AS tmp"))
+        },
+        pantro6 = {
             return(paste(
                 "SELECT `chrom` AS `chromosome`,",
                 "`exonStarts` AS `start`,",
