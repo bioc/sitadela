@@ -22,7 +22,7 @@
     
     testCustomGtf(gtf)
     
-    testKnownBuild(org, refdb, ver = NULL)
+    testKnownBuild(org, refdb, ver = NULL, tv = FALSE)
     testCustomBuild(gtf, metadata)
     
 }
@@ -50,6 +50,9 @@
     
     \item{ver}{specific annotation version, see also 
     \code{\link{addAnnotation}}.}
+    
+    \item{tv}{retrieve versioned genes and transcripts when
+    possible, see also \code{\link{addAnnotation}}.}
     
     \item{gtf}{a valid GTF or GFF file.}
     

@@ -1,4 +1,4 @@
-testKnownBuild <- function(org,refdb,ver=NULL) {
+testKnownBuild <- function(org,refdb,ver=NULL,tv=FALSE) {
     if (missing(org)) {
         org <- "mm9"
         if (missing(refdb)) {
@@ -31,7 +31,7 @@ testKnownBuild <- function(org,refdb,ver=NULL) {
     message("==================================================\n")
     message("Running test 1 of 2 scheduled")
     tryCatch({
-        addAnnotation(organisms,sources,db=tmpdb,versioned=FALSE,
+        addAnnotation(organisms,sources,db=tmpdb,versioned=tv,
             forceDownload=TRUE,rc=NULL)
         genes <- loadAnnotation(genome=names(organisms)[1],refdb=sources[1],
             type="gene",db=tmpdb)

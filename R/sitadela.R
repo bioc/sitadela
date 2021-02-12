@@ -13,12 +13,12 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
         message("\n========================================================")
         message(format(Sys.time(),"%Y-%m-%d %H:%M:%S")," - Try ",times)
         message("========================================================\n")
-       
+
         buildResult <- .annotationWorker(organisms=organisms,sources=sources,
             db=db,versioned=versioned,forceDownload=forceDownload,rc=rc)
-       
+
         complete <- buildResult$complete
-       
+
         if (!complete) {
             message("-------------------------------------------------------")
             message("Failed annotation builds:")
@@ -40,10 +40,10 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
             message("Building process complete!")
             message("-------------------------------------------------------\n")
         }
-       
+
         times <- times + 1
     }
-    
+
     #.annotationWorker(organisms=organisms,sources=sources,db=db,
     #    versioned=versioned,forceDownload=forceDownload,rc=rc)
 }
@@ -215,7 +215,8 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
                             "predefined merged transcript regions for read ",
                             "counting.\nPlease rerun the addAnnotation ",
                             "function with appropriate parameters.")
-                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"transcript")
+                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"transcript",
+                        versioned)
                     message("Merging transcripts for ",o," from ",s,
                         " version ",v)
                     annList <- reduceTranscripts(annGr)
@@ -288,7 +289,7 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
                             "merged 3' UTR regions for read counting.\nPlease ",
                             "rerun the addAnnotation function with ",
                             "appropriate parameters.")
-                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"utr")
+                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"utr",versioned)
                     message("Merging gene 3' UTRs for ",o," from ",s,
                         " version ",v)
                     annList <- reduceTranscripts(annGr)
@@ -342,7 +343,7 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
                             "addAnnotation function with ",
                             "appropriate parameters.")
                     annGr <- 
-                        .loadPrebuiltAnnotation(con,o,s,v,"utr")
+                        .loadPrebuiltAnnotation(con,o,s,v,"utr",versioned)
                     message("Merging transcript 3' UTRs for ",o," from ",s,
                         " version ",v)
                     annList <- reduceTranscriptsUtr(annGr)
@@ -466,7 +467,7 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
                             "addAnnotation function with ",
                             "appropriate parameters.")
                             
-                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"exon")
+                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"exon",versioned)
                     message("Merging exons for ",o," from ",s," version ",v)
                     annList <- reduceExons(annGr)
                     ann <- as.data.frame(annList$model)
@@ -516,7 +517,8 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
                             "Please rerun the addAnnotation ",
                             "function with appropriate parameters.")
                 
-                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"transexon")
+                    annGr <- .loadPrebuiltAnnotation(con,o,s,v,"transexon",
+                        versioned)
                     message("Merging exons for ",o," from ",s," version ",v)
                     annList <- reduceTranscriptsExons(annGr)
                     ann <- as.data.frame(annList$model)
@@ -942,7 +944,7 @@ loadAnnotation <- function(genome,refdb,type=c("gene","transcript","utr",
                 vers <- sort(vers,decreasing=TRUE)
                 version <- vers[1]
             }
-            ann <- .loadPrebuiltAnnotation(con,genome,refdb,version,type,
+            ann <- .loadPrebuiltAnnotation(con,genome,refdb,version,type,wtv,
                 summarized)
             dbDisconnect(con)
             
@@ -1876,10 +1878,10 @@ cmclapply <- function(...,rc) {
         return(lapply(...))
 }
 
-.loadPrebuiltAnnotation <- function(con,genome,refdb,version,type,
+.loadPrebuiltAnnotation <- function(con,genome,refdb,version,type,tv,
     summarized=FALSE) {
     metaType <- .annotationTypeFromInputArgs(type,summarized)
-    cid <- .annotationExists(con,genome,refdb,version,metaType,out="id")
+    cid <- .annotationExists(con,genome,refdb,version,metaType,tv,out="id")
     if (metaType == "summarized_exon")
         tName <- "active_length"
     else if (metaType == "summarized_3utr")
@@ -1888,7 +1890,8 @@ cmclapply <- function(...,rc) {
         tName <- "active_trans_utr_length"
     else if (metaType == "summarized_transcript_exon")
         tName <- "active_trans_exon_length"
-    cida <- .annotationExists(con,genome,refdb,version,"active_length",out="id")
+    cida <- .annotationExists(con,genome,refdb,version,"active_length",tv,
+        out="id")
         
     querySet <- .makeAnnotationQuerySet(metaType,cid,cida)
     
