@@ -475,7 +475,7 @@ testCustomGtf <- function(gtf) {
     }
     else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
-        message(e$message)
+        message(ann)
         fail <- fail + 1
         failReasons[currTest] <- ann
     }
@@ -497,7 +497,7 @@ testCustomGtf <- function(gtf) {
     }
     else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
-        message(e$message)
+        message(ann)
         fail <- fail + 1
         failReasons[currTest] <- ann
     }
@@ -519,7 +519,7 @@ testCustomGtf <- function(gtf) {
     }
     else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
-        message(e$message)
+        message(ann)
         fail <- fail + 1
         failReasons[currTest] <- ann
     }
@@ -541,7 +541,7 @@ testCustomGtf <- function(gtf) {
     }
     else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
-        message(e$message)
+        message(ann)
         fail <- fail + 1
         failReasons[currTest] <- ann
     }
@@ -563,7 +563,7 @@ testCustomGtf <- function(gtf) {
     }
     else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
-        message(e$message)
+        message(ann)
         fail <- fail + 1
         failReasons[currTest] <- ann
     }
@@ -585,7 +585,7 @@ testCustomGtf <- function(gtf) {
     }
     else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
-        message(e$message)
+        message(ann)
         fail <- fail + 1
         failReasons[currTest] <- ann
     }
@@ -607,7 +607,7 @@ testCustomGtf <- function(gtf) {
     }
     else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
-        message(e$message)
+        message(ann)
         fail <- fail + 1
         failReasons[currTest] <- ann
     }
@@ -629,7 +629,7 @@ testCustomGtf <- function(gtf) {
     }
     else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
-        message(e$message)
+        message(ann)
         fail <- fail + 1
         failReasons[currTest] <- ann
     }
@@ -651,7 +651,7 @@ testCustomGtf <- function(gtf) {
     }
     else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
-        message(e$message)
+        message(ann)
         fail <- fail + 1
         failReasons[currTest] <- ann
     }
@@ -673,7 +673,7 @@ testCustomGtf <- function(gtf) {
     }
     else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
-        message(e$message)
+        message(ann)
         fail <- fail + 1
         failReasons[currTest] <- ann
     }
@@ -695,7 +695,7 @@ testCustomGtf <- function(gtf) {
     }
     else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
-        message(e$message)
+        message(ann)
         fail <- fail + 1
         failReasons[currTest] <- ann
     }
@@ -717,7 +717,7 @@ testCustomGtf <- function(gtf) {
     }
     else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
-        message(e$message)
+        message(ann)
         fail <- fail + 1
         failReasons[currTest] <- ann
     }
