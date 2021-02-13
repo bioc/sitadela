@@ -472,12 +472,12 @@
 }
 
 .orgsWithNoVersion <- function() {
-    return(c("hg18","hg19","mm9","rn5","dm3","dm6","danrer7","susscr3",
-        "tair10"))
+    return(c("hg18","hg19","mm9","rn5","dm3","dm6","pantro4","danrer7",
+        "danrer10","susscr3","equcab2","tair10"))
 }
 
 .orgsWithVersionAfter90 <- function() {
-    return(c("hg38","mm10","rn6","danrer10","susscr11","equcab2"))
+    return(c("hg38","mm10","rn6","pantro5","susscr11"))
 }
 
 .orgsWithVersion <- function() {

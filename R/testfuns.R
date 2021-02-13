@@ -195,7 +195,8 @@ testEnsembl <- function(level=c("normal","long","short"),versioned=FALSE) {
                 currTest <- currTest + 1
                 message("\nRunning test ",currTest," of ",nTests," scheduled")
                 message("Testing level ",z," for version ",v," from ",o)
-                tryCatch({
+                
+                fr <- tryCatch({
                     ann <- getEnsemblAnnotation(o,z,v,versioned)
                     if (is(ann,"data.frame")) {
                         message("Test ",currTest," successful!")
@@ -207,10 +208,13 @@ testEnsembl <- function(level=c("normal","long","short"),versioned=FALSE) {
                 },error=function(e) {
                     message("Test ",currTest," failed with error:")
                     message(e$message)
-                    fail <- fail + 1
-                    failReasons[currTest] <- paste("Test ",currTest,":",
-                        message(e$message),sep="")
+                    return(paste("Test ",currTest,":",e$message,sep=""))
                 },finally="")
+                
+                if (is.character(fr)) {
+                    fail <- fail + 1
+                    failReasons[currTest] <- fr
+                }
             }
         }
     }
@@ -219,7 +223,7 @@ testEnsembl <- function(level=c("normal","long","short"),versioned=FALSE) {
     message("Summary")
     message("==================================================\n")
     message("Succesful tests: ",succ," out of ",nTests)
-    message("Failed tests: ",fail," out of ",nTests)
+    message("Failed tests   : ",fail," out of ",nTests)
     message(" ")
     
     d <- which(is.na(failReasons))
@@ -231,7 +235,6 @@ testEnsembl <- function(level=c("normal","long","short"),versioned=FALSE) {
             failReasons <- failReasons[-d]
         return(failReasons)
     }
-    message("Bye!\n")
 }
 
 testEnsemblSimple <- function(orgs,types,versioned=FALSE) {
@@ -249,7 +252,8 @@ testEnsemblSimple <- function(orgs,types,versioned=FALSE) {
             currTest <- currTest + 1
             message("\nRunning test ",currTest," of ",nTests," scheduled")
             message("Testing level ",z," from ",o," from latest version")
-            tryCatch({
+            
+            fr <- tryCatch({
                 ann <- getEnsemblAnnotation(o,z,v,versioned)
                 if (is(ann,"data.frame")) {
                     message("Test ",currTest," successful!")
@@ -261,10 +265,13 @@ testEnsemblSimple <- function(orgs,types,versioned=FALSE) {
             },error=function(e) {
                 message("Test ",currTest," failed with error:")
                 message(e$message)
-                fail <- fail + 1
-                failReasons[currTest] <- paste("Test ",currTest,":",
-                    message(e$message),sep="")
+                return(paste("Test ",currTest,": ",e$message,sep=""))
             },finally="")
+            
+            if (is.character(fr)) {
+                fail <- fail + 1
+                failReasons[currTest] <- fr
+            }
         }
     }
     
@@ -272,7 +279,7 @@ testEnsemblSimple <- function(orgs,types,versioned=FALSE) {
     message("Summary")
     message("==================================================\n")
     message("Succesful tests: ",succ," out of ",nTests)
-    message("Failed tests: ",fail," out of ",nTests)
+    message("Failed tests   : ",fail," out of ",nTests)
     message(" ")
     
     d <- which(is.na(failReasons))
@@ -284,7 +291,6 @@ testEnsemblSimple <- function(orgs,types,versioned=FALSE) {
             failReasons <- failReasons[-d]
         return(failReasons)
     }
-    message("Bye!\n")
 }
 
 testUcsc <- function(orgs,refdbs,types,versioned=FALSE) {
@@ -321,7 +327,7 @@ testUcsc <- function(orgs,refdbs,types,versioned=FALSE) {
                 message("Type  : ", t)
                 query <- .getUcscQuery(org=o,type=t,refdb=r,versioned=versioned)
                 message("Query is: ",query)
-                tryCatch({
+                fr <- tryCatch({
                     dat <- dbGetQuery(con,query)
                     if (is.data.frame(dat)) {
                         message("Test ",currTest," successful!")
@@ -333,11 +339,13 @@ testUcsc <- function(orgs,refdbs,types,versioned=FALSE) {
                 },error=function(e) {
                     message("Test ",currTest," failed with error:")
                     message(e$message)
-                    fail <- fail + 1
-                    failReasons[currTest] <- paste("Test ",currTest,":",
-                        message(e$message),sep="")
+                    return(paste("Test ",currTest,":",e$message,sep=""))
                 },finally="")
                 message("---------------------------------------------------\n")
+                if (is.character(fr)) {
+                    fail <- fail + 1
+                    failReasons[currTest] <- fr
+                }
             }
         }
         message("Disconnecting from UCSC database...")
@@ -348,7 +356,7 @@ testUcsc <- function(orgs,refdbs,types,versioned=FALSE) {
     message("Summary")
     message("==================================================\n")
     message("Succesful tests: ",succ," out of ",nTests)
-    message("Failed tests: ",fail," out of ",nTests)
+    message("Failed tests   : ",fail," out of ",nTests)
     message(" ")
     
     d <- which(is.na(failReasons))
@@ -360,7 +368,6 @@ testUcsc <- function(orgs,refdbs,types,versioned=FALSE) {
             failReasons <- failReasons[-d]
         return(failReasons)
     }
-    message("Bye!\n")
 }
 
 testUcscUtr <- function(orgs,refdbs,versioned=FALSE) {
@@ -393,7 +400,7 @@ testUcscUtr <- function(orgs,refdbs,versioned=FALSE) {
                 query <- .getUcscRefseqVersionedUtrQuery()
                 message("Query is: ",query)
             }
-            tryCatch({
+            fr <- tryCatch({
                 dat <- getUcscUtr(o,r,versioned,.rmysql=TRUE)
                 if (is(dat,"GRanges")) {
                     message("Test ",currTest," successful!")
@@ -405,11 +412,13 @@ testUcscUtr <- function(orgs,refdbs,versioned=FALSE) {
             },error=function(e) {
                 message("Test ",currTest," failed with error:")
                 message(e$message)
-                fail <- fail + 1
-                failReasons[currTest] <- paste("Test ",currTest,":",
-                    message(e$message),sep="")
+                return(paste("Test ",currTest,":",e$message,sep=""))
             },finally="")
             message("---------------------------------------------------\n")
+            if (is.character(fr)) {
+                fail <- fail + 1
+                failReasons[currTest] <- fr
+            }
         }
     }
     
@@ -417,8 +426,7 @@ testUcscUtr <- function(orgs,refdbs,versioned=FALSE) {
     message("Summary")
     message("==================================================\n")
     message("Succesful tests: ",succ," out of ",nTests)
-    message("Failed tests: ",fail," out of ",nTests)
-    message(" ")
+    message("Failed tests   : ",fail," out of ",nTests)
     
     d <- which(is.na(failReasons))
     if (length(d) == nTests) # All successful
@@ -429,7 +437,6 @@ testUcscUtr <- function(orgs,refdbs,versioned=FALSE) {
             failReasons <- failReasons[-d]
         return(failReasons)
     }
-    message("Bye!\n")
 }
 
 
@@ -454,248 +461,272 @@ testCustomGtf <- function(gtf) {
     currTest <- currTest + 1
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing gene gene from GTF")
-    tryCatch({
+    ann <- tryCatch({
         ann <- .makeGeneGeneFromTxDb(txdb,map,FALSE)
-        if (is(ann,"GRanges")) {
-            message("Test ",currTest," successful!")
-            message("Created ",length(ann)," features")
-            message("Sample data:")
-            print(head(ann))
-            succ <- succ + 1
-        }
     },error=function(e) {
+        return(paste("Test ",currTest,":",e$message,sep=""))
+    },finally="")
+    if (is(ann,"GRanges")) {
+        message("Test ",currTest," successful!")
+        message("Created ",length(ann)," features")
+        message("Sample data:")
+        print(head(ann))
+        succ <- succ + 1
+    }
+    else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
         message(e$message)
         fail <- fail + 1
-        failReasons[currTest] <- paste("Test ",currTest,":",
-            message(e$message),sep="")
-    },finally="")
+        failReasons[currTest] <- ann
+    }
     
     currTest <- currTest + 1
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing gene exon from GTF")
-    tryCatch({
+    ann <- tryCatch({
         ann <- .makeGeneExonFromTxDb(txdb,map,FALSE)
-        if (is(ann,"GRanges")) {
-            message("Test ",currTest," successful!")
-            message("Created ",length(ann)," features")
-            message("Sample data:")
-            print(head(ann))
-            succ <- succ + 1
-        }
     },error=function(e) {
+        return(paste("Test ",currTest,":",e$message,sep=""))
+    },finally="")
+    if (is(ann,"GRanges")) {
+        message("Test ",currTest," successful!")
+        message("Created ",length(ann)," features")
+        message("Sample data:")
+        print(head(ann))
+        succ <- succ + 1
+    }
+    else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
         message(e$message)
         fail <- fail + 1
-        failReasons[currTest] <- paste("Test ",currTest,":",
-            message(e$message),sep="")
-    },finally="")
+        failReasons[currTest] <- ann
+    }
     
     currTest <- currTest + 1
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing summarized gene exon from GTF")
-    tryCatch({
+    ann <- tryCatch({
         ann <- .makeSumGeneExonFromTxDb(txdb,map,FALSE)
-        if (is(ann,"GRanges")) {
-            message("Test ",currTest," successful!")
-            message("Created ",length(ann)," features")
-            message("Sample data:")
-            print(head(ann))
-            succ <- succ + 1
-        }
     },error=function(e) {
+        return(paste("Test ",currTest,":",e$message,sep=""))
+    },finally="")
+    if (is(ann,"GRanges")) {
+        message("Test ",currTest," successful!")
+        message("Created ",length(ann)," features")
+        message("Sample data:")
+        print(head(ann))
+        succ <- succ + 1
+    }
+    else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
         message(e$message)
         fail <- fail + 1
-        failReasons[currTest] <- paste("Test ",currTest,":",
-            message(e$message),sep="")
-    },finally="")
+        failReasons[currTest] <- ann
+    }
     
     currTest <- currTest + 1
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing gene utr from GTF")
-    tryCatch({
+    ann <- tryCatch({
         ann <- .makeGeneUtrFromTxDb(txdb,map,FALSE)
-        if (is(ann,"GRanges")) {
-            message("Test ",currTest," successful!")
-            message("Created ",length(ann)," features")
-            message("Sample data:")
-            print(head(ann))
-            succ <- succ + 1
-        }
     },error=function(e) {
+        return(paste("Test ",currTest,":",e$message,sep=""))
+    },finally="")
+    if (is(ann,"GRanges")) {
+        message("Test ",currTest," successful!")
+        message("Created ",length(ann)," features")
+        message("Sample data:")
+        print(head(ann))
+        succ <- succ + 1
+    }
+    else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
         message(e$message)
         fail <- fail + 1
-        failReasons[currTest] <- paste("Test ",currTest,":",
-            message(e$message),sep="")
-    },finally="")
+        failReasons[currTest] <- ann
+    }
     
     currTest <- currTest + 1
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing summarized gene utr from GTF")
-    tryCatch({
+    ann <- tryCatch({
         ann <- .makeSumGeneUtrFromTxDb(txdb,map,FALSE)
-        if (is(ann,"GRanges")) {
-            message("Test ",currTest," successful!")
-            message("Created ",length(ann)," features")
-            message("Sample data:")
-            print(head(ann))
-            succ <- succ + 1
-        }
     },error=function(e) {
+        return(paste("Test ",currTest,":",e$message,sep=""))
+    },finally="")
+    if (is(ann,"GRanges")) {
+        message("Test ",currTest," successful!")
+        message("Created ",length(ann)," features")
+        message("Sample data:")
+        print(head(ann))
+        succ <- succ + 1
+    }
+    else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
         message(e$message)
         fail <- fail + 1
-        failReasons[currTest] <- paste("Test ",currTest,":",
-            message(e$message),sep="")
-    },finally="")
+        failReasons[currTest] <- ann
+    }
     
     currTest <- currTest + 1
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing transcript gene from GTF")
-    tryCatch({
+    ann <- tryCatch({
         ann <- .makeTranscriptGeneFromTxDb(txdb,map,FALSE)
-        if (is(ann,"GRanges")) {
-            message("Test ",currTest," successful!")
-            message("Created ",length(ann)," features")
-            message("Sample data:")
-            print(head(ann))
-            succ <- succ + 1
-        }
     },error=function(e) {
+        return(paste("Test ",currTest,":",e$message,sep=""))
+    },finally="")
+    if (is(ann,"GRanges")) {
+        message("Test ",currTest," successful!")
+        message("Created ",length(ann)," features")
+        message("Sample data:")
+        print(head(ann))
+        succ <- succ + 1
+    }
+    else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
         message(e$message)
         fail <- fail + 1
-        failReasons[currTest] <- paste("Test ",currTest,":",
-            message(e$message),sep="")
-    },finally="")
+        failReasons[currTest] <- ann
+    }
     
     currTest <- currTest + 1
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing summarized transcript gene from GTF")
-    tryCatch({
+    ann <- tryCatch({
         ann <- .makeSumTranscriptGeneFromTxDb(txdb,map,FALSE)
-        if (is(ann,"GRanges")) {
-            message("Test ",currTest," successful!")
-            message("Created ",length(ann)," features")
-            message("Sample data:")
-            print(head(ann))
-            succ <- succ + 1
-        }
     },error=function(e) {
+        return(paste("Test ",currTest,":",e$message,sep=""))
+    },finally="")
+    if (is(ann,"GRanges")) {
+        message("Test ",currTest," successful!")
+        message("Created ",length(ann)," features")
+        message("Sample data:")
+        print(head(ann))
+        succ <- succ + 1
+    }
+    else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
         message(e$message)
         fail <- fail + 1
-        failReasons[currTest] <- paste("Test ",currTest,":",
-            message(e$message),sep="")
-    },finally="")
+        failReasons[currTest] <- ann
+    }
     
     currTest <- currTest + 1
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing transcript exon from GTF")
-    tryCatch({
+    ann <- tryCatch({
         ann <- .makeTranscriptExonFromTxDb(txdb,map,FALSE)
-        if (is(ann,"GRanges")) {
-            message("Test ",currTest," successful!")
-            message("Created ",length(ann)," features")
-            message("Sample data:")
-            print(head(ann))
-            succ <- succ + 1
-        }
     },error=function(e) {
+        return(paste("Test ",currTest,":",e$message,sep=""))
+    },finally="")
+    if (is(ann,"GRanges")) {
+        message("Test ",currTest," successful!")
+        message("Created ",length(ann)," features")
+        message("Sample data:")
+        print(head(ann))
+        succ <- succ + 1
+    }
+    else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
         message(e$message)
         fail <- fail + 1
-        failReasons[currTest] <- paste("Test ",currTest,":",
-            message(e$message),sep="")
-    },finally="")
+        failReasons[currTest] <- ann
+    }
     
     currTest <- currTest + 1
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing summarized transcript exon from GTF")
-    tryCatch({
+    ann <- tryCatch({
         ann <- .makeSumTranscriptExonFromTxDb(txdb,map,FALSE)
-        if (is(ann,"GRanges")) {
-            message("Test ",currTest," successful!")
-            message("Created ",length(ann)," features")
-            message("Sample data:")
-            print(head(ann))
-            succ <- succ + 1
-        }
     },error=function(e) {
+        return(paste("Test ",currTest,":",e$message,sep=""))
+    },finally="")
+    if (is(ann,"GRanges")) {
+        message("Test ",currTest," successful!")
+        message("Created ",length(ann)," features")
+        message("Sample data:")
+        print(head(ann))
+        succ <- succ + 1
+    }
+    else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
         message(e$message)
         fail <- fail + 1
-        failReasons[currTest] <- paste("Test ",currTest,":",
-            message(e$message),sep="")
-    },finally="")
+        failReasons[currTest] <- ann
+    }
     
     currTest <- currTest + 1
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing transcript utr from GTF")
-    tryCatch({
+    ann <- tryCatch({
         ann <- .makeTranscriptUtrFromTxDb(txdb,map,FALSE)
-        if (is(ann,"GRanges")) {
-            message("Test ",currTest," successful!")
-            message("Created ",length(ann)," features")
-            message("Sample data:")
-            print(head(ann))
-            succ <- succ + 1
-        }
     },error=function(e) {
+        return(paste("Test ",currTest,":",e$message,sep=""))
+    },finally="")
+    if (is(ann,"GRanges")) {
+        message("Test ",currTest," successful!")
+        message("Created ",length(ann)," features")
+        message("Sample data:")
+        print(head(ann))
+        succ <- succ + 1
+    }
+    else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
         message(e$message)
         fail <- fail + 1
-        failReasons[currTest] <- paste("Test ",currTest,":",
-            message(e$message),sep="")
-    },finally="")
+        failReasons[currTest] <- ann
+    }
     
     currTest <- currTest + 1
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing summarized transcript utr from GTF")
-    tryCatch({
+    ann <- tryCatch({
         ann <- .makeSumTranscriptUtrFromTxDb(txdb,map,FALSE)
-        if (is(ann,"GRanges")) {
-            message("Test ",currTest," successful!")
-            message("Created ",length(ann)," features")
-            message("Sample data:")
-            print(head(ann))
-            succ <- succ + 1
-        }
     },error=function(e) {
+        return(paste("Test ",currTest,":",e$message,sep=""))
+    },finally="")
+    if (is(ann,"GRanges")) {
+        message("Test ",currTest," successful!")
+        message("Created ",length(ann)," features")
+        message("Sample data:")
+        print(head(ann))
+        succ <- succ + 1
+    }
+    else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
         message(e$message)
         fail <- fail + 1
-        failReasons[currTest] <- paste("Test ",currTest,":",
-            message(e$message),sep="")
-    },finally="")
+        failReasons[currTest] <- ann
+    }
     
     currTest <- currTest + 1
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing exon exon from GTF")
-    tryCatch({
+    ann <- tryCatch({
         ann <- .makeExonExonFromTxDb(txdb,map,FALSE)
-        if (is(ann,"GRanges")) {
-            message("Test ",currTest," successful!")
-            message("Created ",length(ann)," features")
-            message("Sample data:")
-            print(head(ann))
-            succ <- succ + 1
-        }
     },error=function(e) {
+        return(paste("Test ",currTest,":",e$message,sep=""))
+    },finally="")
+    if (is(ann,"GRanges")) {
+        message("Test ",currTest," successful!")
+        message("Created ",length(ann)," features")
+        message("Sample data:")
+        print(head(ann))
+        succ <- succ + 1
+    }
+    else if (is.character(ann)) {
         message("Test ",currTest," failed with error:")
         message(e$message)
         fail <- fail + 1
-        failReasons[currTest] <- paste("Test ",currTest,":",
-            message(e$message),sep="")
-    },finally="")
+        failReasons[currTest] <- ann
+    }
     
     message("Testing finished!\n")
     message("Summary")
     message("==================================================\n")
     message("Succesful tests: ",succ," out of ",nTests)
-    message("Failed tests: ",fail," out of ",nTests)
+    message("Failed tests   : ",fail," out of ",nTests)
     message(" ")
     
     d <- which(is.na(failReasons))
@@ -707,7 +738,6 @@ testCustomGtf <- function(gtf) {
             failReasons <- failReasons[-d]
         return(failReasons)
     }
-    message("Bye!\n")
 }
 
 #testQuery <- function(query,org) {
