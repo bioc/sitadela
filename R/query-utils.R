@@ -962,8 +962,11 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
         dbDisconnect(con)
     }
     utrTmp <- tempfile()
-    write.table(rawAnn,file=utrTmp,sep="\t",col.names=FALSE,row.names=FALSE,
-        quote=FALSE)
+    options(scipen=32) # genePredToGtf has problem with scientific notation
+    write.table(rawAnn,file=gzfile(paste0(utrTmp,".txt.gz")),sep="\t",
+        col.names=FALSE,row.names=FALSE,quote=FALSE)
+    options(scipen=0)
+    return(basename(utrTmp))
 }
 
 .getUcscCredentials <- function() {
