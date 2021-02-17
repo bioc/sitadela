@@ -258,28 +258,30 @@ with the package. These are sample chromosomes from:
 Below, we test custom building with reference sequence HE567025 of Atlantic cod:
 
 ```{r example-4, eval=TRUE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
-gtf <- file.path(system.file(package="sitadela","extdata",
-    "gadMor1_HE567025.gtf.gz"))
-chrom <- file.path(system.file(package="sitadela","extdata",
-    "gadMor1_HE567025.txt.gz"))
-chromInfo <- read.delim(chrom,header=FALSE,row.names=1)
-names(chromInfo) <- "length"
-metadata <- list(
-    organism="gadMor1_HE567025",
-    source="sitadela_package",
-    chromInfo=chromInfo
-)
-tmpdb <- tempfile()
+if (.Platform$OS.type == "unix" && !grepl("^darwin",R.version$os)) {
+    gtf <- file.path(system.file(package="sitadela","extdata",
+        "gadMor1_HE567025.gtf.gz"))
+    chrom <- file.path(system.file(package="sitadela","extdata",
+        "gadMor1_HE567025.txt.gz"))
+    chromInfo <- read.delim(chrom,header=FALSE,row.names=1)
+    names(chromInfo) <- "length"
+    metadata <- list(
+        organism="gadMor1_HE567025",
+        source="sitadela_package",
+        chromInfo=chromInfo
+    )
+    tmpdb <- tempfile()
 
-addCustomAnnotation(gtfFile=gtf,metadata=metadata,db=tmpdb)
+    addCustomAnnotation(gtfFile=gtf,metadata=metadata,db=tmpdb)
 
-# Try to retrieve some data
-g <- loadAnnotation(genome="gadMor1_HE567025",refdb="sitadela_package",
-    type="gene",db=tmpdb)
-g
+    # Try to retrieve some data
+    g <- loadAnnotation(genome="gadMor1_HE567025",refdb="sitadela_package",
+        type="gene",db=tmpdb)
+    g
 
-# Delete the temporary database
-unlink(tmpdb)
+    # Delete the temporary database
+    unlink(tmpdb)
+}
 ```
 
 The next one is a custom annotation for the Ebola virus from UCSC:

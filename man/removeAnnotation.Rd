@@ -58,10 +58,10 @@ if (.Platform$OS.type == "unix") {
     myGenes <- loadAnnotation(genome="dummy",refdb="dummy_db",
         type="gene",db=myDb)
     myGenes
+    
+    # Now remove
+    n <- removeAnnotation("dummy","dummy_db",1,myDb)
 }
-
-# Now remove
-n <- removeAnnotation("dummy","dummy_db",1,myDb)
 }
 \author{
     Panagiotis Moulos

@@ -6,7 +6,7 @@ Title: An R package for the easy provision of simple but
 Authors@R: c(person(given="Panagiotis", family="Moulos",
     email="moulos@fleming.gr", role=c("aut", "cre")))
 Depends:
-    R (>= 4.0.0)
+    R (>= 4.1.0)
 Imports:
     Biobase,
     BiocGenerics,
@@ -48,7 +48,7 @@ biocViews: Software, WorkflowStep, RNASeq, Transcription, Sequencing,
 VignetteBuilder: knitr
 BugReports: https://github.com/pmoulos/sitadela/issues
 Version: 0.0.3
-Date: 2021-02-14
+Date: 2021-02-17
 Collate:
     'argcheck.R'
     'external.R'

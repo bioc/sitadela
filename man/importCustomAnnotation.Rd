@@ -31,16 +31,19 @@ chromInfo <- data.frame(length=c(1000L,2000L,1500L),
     row.names=c("A","B","C"))
 
 # Build with the metadata list filled (you can also provide a version)
-myGenes <- importCustomAnnotation(
-    gtfFile=file.path(system.file(package="sitadela"),"dummy.gtf.gz"),
-    metadata=list(
-        organism="dummy",
-        source="dummy_db",
-        version=1,
-        chromInfo=chromInfo
-    ),
-    type="gene"
-)
+if (.Platform$OS.type == "unix" && !grepl("^darwin",R.version$os)) {
+    myGenes <- importCustomAnnotation(
+        gtfFile=file.path(system.file(package="sitadela"),
+            "dummy.gtf.gz"),
+        metadata=list(
+            organism="dummy",
+            source="dummy_db",
+            version=1,
+            chromInfo=chromInfo
+        ),
+        type="gene"
+    )
+}
 
 ## Real data!
 ## Gene annotation dump from Ensembl
