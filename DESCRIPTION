@@ -38,7 +38,7 @@ Description: Provides an interface to build a unified database of
     required instead of the more complex annotation Bioconductor 
     packages. Also useful when combinatorial annotation elements
     are reuired, such as RefSeq coordinates with Ensembl biotypes.
-License: GPL (>= 3) + file LICENSE
+License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: false
 URL: http://www.fleming.gr
