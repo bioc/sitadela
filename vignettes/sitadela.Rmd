@@ -66,7 +66,7 @@ which is essential for applications related to precision medicine and diagnostic
 procedures.
 * A unified interface to several genomic interval annotation sources.
 
-SiTaDelA (__Si__mple __Ta__b __Del__imited __A__nnotations), through efficient
+SiTaDelA (**Si**mple **Ta**b **Del**imited **A**nnotations), through efficient
 and extensive usage of Bioconductor facilites offers these additional 
 functionalities along with certain levels of automation. More specifically, the
 `sitadela` package offers:
