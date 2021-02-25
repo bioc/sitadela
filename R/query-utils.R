@@ -529,16 +529,21 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
     return(dbGetQuery(con,"SELECT * FROM content WHERE user=1"))
 }
 
-.annotationExists <- function(con,o,s,v=NULL,t=NULL,h=FALSE,
+.annotationExists <- function(con,o,s,v=NULL,t=NULL,h=NULL,
     out=c("tf","nr","id")) {
     out <- out[1]
-    h <- ifelse(h,1,0)
+    if (!is.null(h) && is.logical(h))
+        h <- ifelse(h,1,0)
+    else
+        h <- NULL
     query <- paste("SELECT _id FROM content WHERE source='",s,
-        "' AND organism='",o,"' AND has_tv=",h,sep="")
+        "' AND organism='",o,"'",sep="")
     if (!is.null(v))
         query <- paste(query," AND version=",v,sep="")
     if (!is.null(t))
         query <- paste(query," AND type='",t,"'",sep="")
+    if (!is.null(h))
+        query <- paste(query," AND has_tv=",h,sep="")
     res <- dbGetQuery(con,query)
     if (out == "tf")
         return(nrow(res) > 0)
@@ -548,6 +553,17 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
         if (nrow(res) > 0)
             return(res[1,1])
     }
+}
+
+.containsVersionedGT <- function(con,o,s,only=FALSE) {
+    query <- paste("SELECT has_tv FROM content WHERE source='",s,
+        "' AND organism='",o,"'",sep="")
+    res <- dbGetQuery(con,query)
+    out <- as.integer(res[,1])
+    if (!only)
+        return(any(out==1))
+    else
+        return(all(out==1))
 }
 
 .dropAnnotation <- function(con,o,s,v,t,h) {

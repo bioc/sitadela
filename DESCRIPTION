@@ -38,7 +38,11 @@ Description: Provides an interface to build a unified database of
     required instead of the more complex annotation Bioconductor 
     packages. Also useful when combinatorial annotation elements
     are reuired, such as RefSeq coordinates with Ensembl biotypes.
-License: GPL (>= 3)
+    Finally, it can download, construct and handle annotations with
+    versioned genes and transcripts (where available, e.g. RefSeq
+    and latest Ensembl). This is particularly useful in precision
+    medicine applications where the latter must be reported.
+License: Artistic-2.0
 Encoding: UTF-8
 LazyData: false
 URL: http://www.fleming.gr
@@ -47,8 +51,8 @@ biocViews: Software, WorkflowStep, RNASeq, Transcription, Sequencing,
     SystemsBiology, AlternativeSplicing, DataImport, ChIPSeq
 VignetteBuilder: knitr
 BugReports: https://github.com/pmoulos/sitadela/issues
-Version: 0.99.0
-Date: 2021-02-19
+Version: 0.99.1
+Date: 2021-02-25
 Collate:
     'argcheck.R'
     'external.R'

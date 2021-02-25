@@ -922,8 +922,28 @@ loadAnnotation <- function(genome,refdb,type=c("gene","transcript","utr",
         if (!.annotationExists(con,genome,refdb)) {
             warning("The requested annotation does not seem to exist in the ",
                 "database! It will be loaded on the fly.\nConsider importing ",
-                "it by using addAnnotation.")
+                "it by using addAnnotation.",immediate.=TRUE)
             onTheFly <- TRUE
+        }
+        
+        # Have we asked for transcript versions? Does the database contain 
+        # any versioned transcript annotation?
+        if (wtv && !.containsVersionedGT(con,genome,refdb)) {
+            warning("A versioned gene/transcript annotation was requested, ",
+                "however it does not seem to exist in the database!\n",
+                "It will be loaded on the fly. Consider importing it by ",
+                "using addAnnotation.",immediate.=TRUE)
+            onTheFly = TRUE
+        }
+        
+        # Have we asked for non versioned transcripts in a database that 
+        # contains ONLY versioned transcripts?
+        if (!wtv && .containsVersionedGT(con,genome,refdb,TRUE)) {
+            warning("Non versioned gene/transcript annotation was requested, ",
+                "however it does not seem to exist in the database!\n",
+                "It will be loaded on the fly. Consider importing it by ",
+                "using addAnnotation.",immediate.=TRUE)
+            onTheFly = TRUE
         }
         
         # If main source exists, decide on version
