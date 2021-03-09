@@ -462,7 +462,7 @@ testCustomGtf <- function(gtf) {
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing gene gene from GTF")
     ann <- tryCatch({
-        ann <- .makeGeneGeneFromTxDb(txdb,map,FALSE)
+        .makeGeneGeneFromTxDb(txdb,map,FALSE)
     },error=function(e) {
         return(paste("Test ",currTest,":",e$message,sep=""))
     },finally="")
@@ -484,7 +484,7 @@ testCustomGtf <- function(gtf) {
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing gene exon from GTF")
     ann <- tryCatch({
-        ann <- .makeGeneExonFromTxDb(txdb,map,FALSE)
+        .makeGeneExonFromTxDb(txdb,map,FALSE)
     },error=function(e) {
         return(paste("Test ",currTest,":",e$message,sep=""))
     },finally="")
@@ -506,7 +506,7 @@ testCustomGtf <- function(gtf) {
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing summarized gene exon from GTF")
     ann <- tryCatch({
-        ann <- .makeSumGeneExonFromTxDb(txdb,map,FALSE)
+        .makeSumGeneExonFromTxDb(txdb,map,FALSE)
     },error=function(e) {
         return(paste("Test ",currTest,":",e$message,sep=""))
     },finally="")
@@ -528,7 +528,7 @@ testCustomGtf <- function(gtf) {
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing gene utr from GTF")
     ann <- tryCatch({
-        ann <- .makeGeneUtrFromTxDb(txdb,map,FALSE)
+        .makeGeneUtrFromTxDb(txdb,map,FALSE)
     },error=function(e) {
         return(paste("Test ",currTest,":",e$message,sep=""))
     },finally="")
@@ -550,7 +550,7 @@ testCustomGtf <- function(gtf) {
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing summarized gene utr from GTF")
     ann <- tryCatch({
-        ann <- .makeSumGeneUtrFromTxDb(txdb,map,FALSE)
+        .makeSumGeneUtrFromTxDb(txdb,map,FALSE)
     },error=function(e) {
         return(paste("Test ",currTest,":",e$message,sep=""))
     },finally="")
@@ -572,7 +572,7 @@ testCustomGtf <- function(gtf) {
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing transcript gene from GTF")
     ann <- tryCatch({
-        ann <- .makeTranscriptGeneFromTxDb(txdb,map,FALSE)
+        .makeTranscriptGeneFromTxDb(txdb,map,FALSE)
     },error=function(e) {
         return(paste("Test ",currTest,":",e$message,sep=""))
     },finally="")
@@ -594,7 +594,7 @@ testCustomGtf <- function(gtf) {
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing summarized transcript gene from GTF")
     ann <- tryCatch({
-        ann <- .makeSumTranscriptGeneFromTxDb(txdb,map,FALSE)
+        .makeSumTranscriptGeneFromTxDb(txdb,map,FALSE)
     },error=function(e) {
         return(paste("Test ",currTest,":",e$message,sep=""))
     },finally="")
@@ -616,7 +616,7 @@ testCustomGtf <- function(gtf) {
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing transcript exon from GTF")
     ann <- tryCatch({
-        ann <- .makeTranscriptExonFromTxDb(txdb,map,FALSE)
+        .makeTranscriptExonFromTxDb(txdb,map,FALSE)
     },error=function(e) {
         return(paste("Test ",currTest,":",e$message,sep=""))
     },finally="")
@@ -638,7 +638,7 @@ testCustomGtf <- function(gtf) {
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing summarized transcript exon from GTF")
     ann <- tryCatch({
-        ann <- .makeSumTranscriptExonFromTxDb(txdb,map,FALSE)
+        .makeSumTranscriptExonFromTxDb(txdb,map,FALSE)
     },error=function(e) {
         return(paste("Test ",currTest,":",e$message,sep=""))
     },finally="")
@@ -660,7 +660,7 @@ testCustomGtf <- function(gtf) {
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing transcript utr from GTF")
     ann <- tryCatch({
-        ann <- .makeTranscriptUtrFromTxDb(txdb,map,FALSE)
+        .makeTranscriptUtrFromTxDb(txdb,map,FALSE)
     },error=function(e) {
         return(paste("Test ",currTest,":",e$message,sep=""))
     },finally="")
@@ -682,7 +682,7 @@ testCustomGtf <- function(gtf) {
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing summarized transcript utr from GTF")
     ann <- tryCatch({
-        ann <- .makeSumTranscriptUtrFromTxDb(txdb,map,FALSE)
+        .makeSumTranscriptUtrFromTxDb(txdb,map,FALSE)
     },error=function(e) {
         return(paste("Test ",currTest,":",e$message,sep=""))
     },finally="")
@@ -704,7 +704,7 @@ testCustomGtf <- function(gtf) {
     message("\nRunning test ",currTest," of ",nTests," scheduled")
     message("Testing exon exon from GTF")
     ann <- tryCatch({
-        ann <- .makeExonExonFromTxDb(txdb,map,FALSE)
+        .makeExonExonFromTxDb(txdb,map,FALSE)
     },error=function(e) {
         return(paste("Test ",currTest,":",e$message,sep=""))
     },finally="")

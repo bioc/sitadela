@@ -26,97 +26,54 @@
 }
 
 .checkNumArgs <- function(argName,argValue,argType,argBounds,direction) {
-    switch(argType,
-        numeric = {
-            if (!is.numeric(argValue))
-                stop("\"",argName,"\"",
-                    " parameter must be a numeric value!")
-            if (!missing(argBounds)) {
-                switch(direction,
-                    both = {
-                        if (argValue<argBounds[1] ||
-                            argValue>argBounds[2])
-                            stop("\"",argName,"\""," parameter must be a ",
-                                "numeric ","value larger than or equal to ",
-                                argBounds[1]," and smaller than or equal to ",
-                                argBounds[2],"!")
-                    },
-                    botheq = {
-                        if (argValue<=argBounds[1] || argValue>=argBounds[2])
-                            stop("\"",argName,"\""," parameter must be a ",
-                                "numeric value larger than ",argBounds[1],
-                                " and smaller than ",argBounds[2],"!")
-                    },
-                    gt = {
-                        if (argValue<=argBounds[1])
-                            stop("\"",argName,"\""," parameter must be a ",
-                                "numeric value greater than ",argBounds[1],"!")
-                    },
-                    lt = {
-                        if (argValue>=argBounds[1])
-                            stop("\"",argName,"\""," parameter must be a ",
-                                "numeric value lower than ",argBounds[1],"!")
-                    },
-                    gte = {
-                        if (argValue<argBounds[1])
-                            stop("\"",argName,"\""," parameter must be a ",
-                                "numeric value greater than or equal to ",
-                                argBounds[1],"!")
-                    },
-                    lte = {
-                        if (argValue>argBounds[1])
-                            stop("\"",argName,"\""," parameter must be a ",
-                                "numeric value lower than or equal to ",
-                                argBounds[1],"!")
-                    }
-                )
-            }
-        },
-        integer = {
-            if (!is.integer(argValue))
-                stop("\"",argName,"\""," parameter must be an integer!")
-            if (!missing(argBounds)) {
-                switch(direction,
-                    both = {
-                        if (argValue<argBounds[1] ||
-                            argValue>argBounds[2])
-                            stop("\"",argName,"\""," parameter must be ",
-                                "an integer larger than or equal to ",
-                                argBounds[1]," and smaller than or equal to ",
-                                argBounds[2],"!")
-                    },
-                    botheq = {
-                        if (argValue<=argBounds[1] || argValue>=argBounds[2])
-                            stop("\"",argName,"\""," parameter must be ",
-                                "an integer larger than ",argBounds[1],
-                                " and smaller than ",argBounds[2],"!")
-                    },
-                    gt = {
-                        if (argValue<=argBounds[1])
-                            stop("\"",argName,"\""," parameter must be ",
-                                "an integer greater than ",argBounds[1],"!")
-                    },
-                    lt = {
-                        if (argValue>=argBounds[1])
-                            stop("\"",argName,"\""," parameter must be ",
-                                "an integer lower than ",argBounds[1],"!")
-                    },
-                    gte = {
-                        if (argValue<argBounds[1])
-                            stop("\"",argName,"\""," parameter must be ",
-                                "an integer greater than or equal to ",
-                                argBounds[1],"!")
-                    },
-                    lte = {
-                        if (argValue>argBounds[1])
-                            stop("\"",argName,"\""," parameter must be ",
-                                "an integer lower than or equal to ",
-                                argBounds[1],"!")
-                    }
-                )
-            }
-        }
+    # First generic check so not to continue if fail
+    if (!is(argValue,argType))
+        stop("\"",argName,"\" parameter must be a(n) ",argType," value!")
+    
+    # Then, proceed with a lookup table to avoid repetition (suggested by
+    # Marcel Ramos during package review)
+    lookup <- list(
+        both=list(
+            fail=function(x) x<argBounds[1] || x>argBounds[2],
+            cls=class,
+            msg=function(x) paste0("larger than or equal to ",
+                argBounds[1]," and smaller than or equal to ",
+                argBounds[2])
+        ),
+        botheq=list(
+            fail=function(x) x<=argBounds[1] || x>=argBounds[2],
+            cls=class,
+            msg=function(x) paste0("larger than ",argBounds[1],
+                " and smaller than ",argBounds[2])
+        ),
+        gt=list(
+            fail=function(x) x<=argBounds[1], 
+            cls=class,
+            msg=function(x) paste0("greater than ",argBounds[1])
+        ),
+        lt=list(
+            fail=function(x) x>=argBounds[1], 
+            cls=class,
+            msg=function(x) paste0("lower than ",argBounds[1])
+        ),
+        gte=list(
+            fail=function(x) x<argBounds[1], 
+            cls=class,
+            msg=function(x) paste0("greater than or equal to ",
+                argBounds[1])
+        ),
+        lte=list(
+            fail=function(x) x>argBounds[1], 
+            cls=class,
+            msg=function(x) paste0("lower than or equal to ",
+                argBounds[1])
+        )
     )
+    
+    check <- lapply(lookup[[direction]],function(f) f(argValue))
+    if (check$fail || check$cls != argType)
+        stop("\"",argName,"\""," parameter must be a(n) ",argType,
+            " value ",check$msg,"!")
 }
 
 .getValidArgs <- function() {

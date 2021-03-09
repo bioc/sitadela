@@ -36,8 +36,13 @@
     res <- httr::POST(url = host, body = list(query = query),
         httr::timeout(2000))
     if (httr::status_code(res) == 302) {
-        host <- stringr::str_match(string=res$all_headers[[1]]$headers$location,
-            pattern = "//([a-zA-Z./]+)\\??;?redirectsrc")[, 2]
+        #host <- stringr::str_match(string=res$all_headers[[1]]$headers$location,
+        #    pattern = "//([a-zA-Z./]+)\\??;?redirectsrc")[, 2]
+        pattern  <- "//([a-zA-Z./]+)\\??;?redirectsrc"
+        text <- res$all_headers[[1]]$headers$location
+        matches <- regexec(pattern = pattern, text = text)
+        tmp <- do.call("rbind", regmatches(x = text, m = matches))
+        host <- tmp[,2]
         res <- httr::POST(url = host, body = list(query = query),
             config = list(httr::timeout(2000)))
     }
@@ -60,7 +65,7 @@
             "results that pass both filters will be returned");
     }
     # it's easy to not realise you're passing a data frame here, so check
-    if (is.data.frame(values) && ncol(values == 1)) {
+    if (is.data.frame(values) && ncol(values)) {
         values <- values[,1]
     }
     if (!is.list(values)) {
@@ -182,13 +187,13 @@
             query=fullXmlQuery)
         
         if (verbose) {
-            writeLines("#################\nResults from server:")
-            print(postRes)
+            message("#################\nResults from server:")
+            message(postRes)
         }
         
         if (!(is.character(postRes) && (length(postRes)==1L)))
             stop("The query to the BioMart webservice returned an invalid ",
-                "result: biomaRt expected a character string of length 1.\n",
+                "result: sitadela expected a character string of length 1.\n",
                 "Please report this on the support site at", 
                 "http://support.bioconductor.org")
         
@@ -205,14 +210,14 @@
             result <- read.table(con,sep="\t",header=callHeader,quote=quote,
                 comment.char="",check.names=FALSE,stringsAsFactors=FALSE)
             if(verbose) {
-                writeLines("#################\nParsed results:")
-                print(result)
+                message("#################\nParsed results:")
+                message(result[1,])
             }
             close(con)
             
             if (!(is(result,"data.frame") 
                 && (ncol(result)==length(attributes)))) {
-                print(head(result))
+                #print(head(result))
                 stop("The query to the BioMart webservice returned an invalid ",
                     "result: the number of columns in the result table does ",
                     "not equal the number of attributes in the query.\n",
