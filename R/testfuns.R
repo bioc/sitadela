@@ -740,6 +740,7 @@ testCustomGtf <- function(gtf) {
     }
 }
 
+#
 #testQuery <- function(query,org) {
 #    dbCreds <- .getUcscCredentials()
 #    drv <- dbDriver("MySQL")
@@ -750,3 +751,4 @@ testCustomGtf <- function(gtf) {
 #        finally=dbDisconnect(con))
 #    return(rawAnn)
 #}
+#
