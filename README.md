@@ -110,6 +110,26 @@ automatic database builds:
 * Horse (*Equus cabalus*) genome version **equCab2**
 * Arabidopsis (*Arabidobsis thaliana*) genome version **TAIR10**
 
+Please note that if genomic annotations from UCSC, RefSeq or NCBI are required,
+the following `BSgenome` packages are required (depending on the organisms to
+be installed) in order to calculate GC content for gene annotations. Also note 
+that there is no `BSgenome` package for some of the `sitadela` supported
+organisms and therefore GC contents will not be available anyway.
+
+* BSgenome.Hsapiens.UCSC.hg18
+* BSgenome.Hsapiens.UCSC.hg19
+* BSgenome.Hsapiens.UCSC.hg38
+* BSgenome.Mmusculus.UCSC.mm9
+* BSgenome.Mmusculus.UCSC.mm10
+* BSgenome.Rnorvegicus.UCSC.rn5
+* BSgenome.Rnorvegicus.UCSC.rn6
+* BSgenome.Dmelanogaster.UCSC.dm3
+* BSgenome.Dmelanogaster.UCSC.dm6
+* BSgenome.Drerio.UCSC.danRer7
+* BSgenome.Drerio.UCSC.danRer10
+
+Is is therefore advised to install these `BSgenome` packages in advance.
+
 # Using the local database
 
 ## Installation of sitadela

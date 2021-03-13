@@ -4,7 +4,7 @@
 \usage{
     addAnnotation(organisms, sources, db = getDbPath(),
         versioned = FALSE, forceDownload = TRUE, retries = 5,
-        rc = NULL)
+        rc = NULL, stopIfNotBS = FALSE)
 }
 \arguments{
     \item{organisms}{a list of organisms and versions
@@ -39,6 +39,10 @@
     \item{rc}{fraction (0-1) of cores to use in a multicore 
     system. It defaults to \code{NULL} (no parallelization).
     Sometimes used for building certain annotation types.}
+    
+    \item{stopIfNotBS}{stop or warn (default) if certain 
+    \code{BSgenome} packages are not present. See also
+    Details.}
 }
 \value{
     The function does not return anything. Only the SQLite 
@@ -99,6 +103,19 @@
     maintained transcripts. UCSC, RefSeq and NCBI annotations 
     are constructed by querying the UCSC Genome Browser 
     database.
+    
+    Regarding \code{stopIfNotBS}, when \code{sources} 
+    includes \code{"ucsc"}, \code{"refseq"} or \code{"ncbi"},
+    the GC content of a gene is not available as a database
+    attribute as with Ensembl and has to be calculated if to
+    be included in the respective annotation. For this reason,
+    sitadela uses `BSgenome` packages. If 
+    \code{stopIfNotBS=FALSE} (default), then the annotation
+    building continues and GC content is \code{NA} for the
+    missing `BSgenome` packages.If \code{stopIfNotBS=FALSE},
+    then building stops until all the required packages for
+    the selected organisms become available (installed by
+    the user).
 }
 \examples{
 # Build a test database with one genome

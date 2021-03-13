@@ -43,7 +43,7 @@ importFrom("S4Vectors",queryHits)
 importFrom("S4Vectors",runValue)
 importFrom("S4Vectors",subjectHits)
 
-importFrom("rtracklayer",import)
+importFrom("BiocIO",import)
 
 importFrom("utils",download.file)
 importFrom("utils",head)

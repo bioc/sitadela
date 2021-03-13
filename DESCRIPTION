@@ -21,11 +21,10 @@ Imports:
     parallel,
     Rsamtools,
     RSQLite,
-    rtracklayer,
+    BiocIO,
     S4Vectors,
     utils
 Suggests:
-    BiocManager,
     BSgenome,
     knitr,
     RMySQL,
@@ -51,7 +50,7 @@ biocViews: Software, WorkflowStep, RNASeq, Transcription, Sequencing,
 VignetteBuilder: knitr
 BugReports: https://github.com/pmoulos/sitadela/issues
 Version: 0.99.3
-Date: 2021-03-09
+Date: 2021-03-12
 Collate:
     'argcheck.R'
     'external.R'

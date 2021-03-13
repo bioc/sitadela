@@ -124,6 +124,26 @@ automatic database builds:
 * Horse (*Equus cabalus*) genome version **equCab2**
 * Arabidopsis (*Arabidobsis thaliana*) genome version **TAIR10**
 
+Please note that if genomic annotations from UCSC, RefSeq or NCBI are required,
+the following `BSgenome` packages are required (depending on the organisms to
+be installed) in order to calculate GC content for gene annotations. Also note 
+that there is no `BSgenome` package for some of the `sitadela` supported
+organisms and therefore GC contents will not be available anyway.
+
+* BSgenome.Hsapiens.UCSC.hg18
+* BSgenome.Hsapiens.UCSC.hg19
+* BSgenome.Hsapiens.UCSC.hg38
+* BSgenome.Mmusculus.UCSC.mm9
+* BSgenome.Mmusculus.UCSC.mm10
+* BSgenome.Rnorvegicus.UCSC.rn5
+* BSgenome.Rnorvegicus.UCSC.rn6
+* BSgenome.Dmelanogaster.UCSC.dm3
+* BSgenome.Dmelanogaster.UCSC.dm6
+* BSgenome.Drerio.UCSC.danRer7
+* BSgenome.Drerio.UCSC.danRer10
+
+Is is therefore advised to install these `BSgenome` packages in advance.
+
 # Using the local database
 
 ## Installation of sitadela
@@ -284,9 +304,21 @@ if (.Platform$OS.type == "unix" && !grepl("^darwin",R.version$os)) {
 }
 ```
 
-The next one is a custom annotation for the Ebola virus from UCSC:
+The next one is part of a custom annotation for the Ebola virus from UCSC:
 
 ```{r example-5, eval=TRUE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
+# Stub
+```
+
+
+Please note that complete annotations from UCSC require the `genePredToGtf`
+tool from the UCSC tools base and runs only on Linux. The tool is required
+only for building 3' UTR annotations from UCSC, RefSeq and NCBI, all of which
+are being retrieved from the UCSC databases. The next example (full EBOLA virus
+annotation, not evaluated) demonstrates how this is done in a Unix based 
+machine:
+
+```{r example-5-1, eval=FALSE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
 # Setup a temporary directory to download files etc.
 customDir <- file.path(tempdir(),"test_custom")
 dir.create(customDir)
@@ -405,30 +437,38 @@ if (.Platform$OS.type == "unix") {
 ```
 
 Another example, Armadillo from Ensembl. This should work irrespectively of 
-operating system. We are downloading chromosomal information from UCSC.
+operating system. We are downloading chromosomal information from UCSC. Again,
+a small dataset included in the package is included in this vignette. See the
+commented code below for the full annotation case.
 
 ```{r example-7, eval=FALSE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
-# Gene annotation dump from Ensembl
-download.file(paste0("ftp://ftp.ensembl.org/pub/release-98/gtf/",
-    "dasypus_novemcinctus/Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz"),
-    file.path(customDir,"Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz"))
+## Gene annotation dump from Ensembl
+#download.file(paste0("ftp://ftp.ensembl.org/pub/release-98/gtf/",
+#    "dasypus_novemcinctus/Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz"),
+#    file.path(customDir,"Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz"))
+#
+# gtfFile <- file.path(customDir,"Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz")
+#
+## Chromosome information will be provided from the following BAM file
+## available from Ensembl. We have noticed that when using Windows as the OS,
+## a remote BAM file cannot be opened by scanBamParam, so for this example,
+## chromosome length information will not be available when running in Windows.
+#chromInfo <- NULL
+#if (.Platform$OS.type == "unix")
+#    chromInfo <- paste0("ftp://ftp.ensembl.org/pub/release-98/bamcov/",
+#        "dasypus_novemcinctus/genebuild/Dasnov3.broad.Ascending_Colon_5.1.bam")
 
-# Chromosome information will be provided from the following BAM file
-# available from Ensembl. We have noticed that when using Windows as the OS,
-# a remote BAM files cannot be opened by scanBamParam, so for this example,
-# chromosome length information will not be available when running in Windows.
-bamForInfo <- NULL
-if (.Platform$OS.type == "unix")
-    bamForInfo <- paste0("ftp://ftp.ensembl.org/pub/release-98/bamcov/",
-        "dasypus_novemcinctus/genebuild/Dasnov3.broad.Ascending_Colon_5.1.bam")
+gtfFile <- system.file(package="sitadela","dasNov3_JH569334.gtf.gz")
+chromInfo <- read.delim(system.file(package="sitadela",
+    "dasNov3_JH569334.txt.gz"),header=FALSE)
 
 # Build with the metadata list filled (you can also provide a version)
 addCustomAnnotation(
-    gtfFile=file.path(customDir,"Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz"),
+    gtfFile=gtfFile,
     metadata=list(
         organism="dasNov3_test",
         source="ensembl_test",
-        chromInfo=bamForInfo
+        chromInfo=chromInfo
     ),
     db=myDb
 )

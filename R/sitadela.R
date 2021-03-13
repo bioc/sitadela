@@ -1,6 +1,16 @@
 addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
-    forceDownload=TRUE,retries=5,rc=NULL) {
-    
+    forceDownload=TRUE,retries=5,rc=NULL,stopIfNotBS=FALSE) {
+    # Firstly, throw a warning if RefSeq, NCBI or UCSC is in sources and the
+    # respective BSgenome package (if available) is not installed as there will
+    # be no GC content available in gene annotations.
+    if (any(sources %in% c("ucsc","refseq","ncbi"))) {
+        if (is.list(organisms))
+            orgToCheck <- names(organisms)
+        else
+            orgToCheck <- organisms
+        .checkIfBSgenomesInstalled(orgToCheck,stopIfNotBS)
+    }
+        
     complete <- FALSE
     times <- 1
     pv <- tryCatch(packageVersion("sitadela"),error=function(e) return(""),
@@ -1589,7 +1599,7 @@ getUcscOrganism <- function(org) {
     )
 }
 
-getBsOrganism <- function(org) {
+getBsOrganism <- function(org,.warn=TRUE) {
     switch(org,
         hg18 = {
             return("BSgenome.Hsapiens.UCSC.hg18")
@@ -1625,16 +1635,18 @@ getBsOrganism <- function(org) {
             return("BSgenome.Drerio.UCSC.danRer10")
         },
         danrer11 = {
-            warning("danRer11 is not supported by BSgenome! Please use Ensembl",
-                " as annotation source if GC content is important.",
+            if (.warn)
+                warning("danRer11 is not supported by BSgenome! Please use ",
+                "Ensembl as annotation source if GC content is important.",
                 immediate.=TRUE)
             return(NA)
             #return("BSgenome.Drerio.UCSC.danRer11")
         },
         pantro4 = {
-            warning("panTro4 is not supported by BSgenome! Please use Ensembl ",
-                "as annotation source if GC content is important.",
-                immediate.=TRUE)
+            if (.warn)
+                warning("panTro4 is not supported by BSgenome! Please use ",
+                    "Ensembl as annotation source if GC content is important.",
+                    immediate.=TRUE)
             return(NA)
         },
         pantro5 = {
@@ -1644,26 +1656,30 @@ getBsOrganism <- function(org) {
             return("BSgenome.Sscrofa.UCSC.susScr3")
         },
         susscr11 = {
-            warning("susScr11 is not supported by BSgenome! Please use ",
-                "Ensembl as annotation source if GC content is important.",
-                immediate.=TRUE)
+            if (.warn)
+                warning("susScr11 is not supported by BSgenome! Please use ",
+                    "Ensembl as annotation source if GC content is important.",
+                    immediate.=TRUE)
             return(NA)
         },
         equcab2 = {
-            warning("equCab2 is not supported by BSgenome! Please use Ensembl ",
-                "as annotation source if GC content is important.",
-                immediate.=TRUE)
+            if (.warn)
+                warning("equCab2 is not supported by BSgenome! Please use ",
+                    "Ensembl as annotation source if GC content is important.",
+                    immediate.=TRUE)
             return(NA)
         },
         equcab3 = {
-            warning("equCab3 is not supported by BSgenome! Please use Ensembl ",
-                "as annotation source if GC content is important.",
+            if (.warn)
+                warning("equCab3 is not supported by BSgenome! Please use ",
+                    "Ensembl as annotation source if GC content is important.",
                 immediate.=TRUE)
             return(NA)
         },
         tair10 = {
-            warning("TAIR10 is not supported by BSgenome! Please use Ensembl ",
-                "as annotation source if GC content is important.",
+            if (.warn)
+                warning("TAIR10 is not supported by BSgenome! Please use ",
+                    "Ensembl as annotation source if GC content is important.",
                 immediate.=TRUE)
             return(NA)
         }
@@ -1681,8 +1697,10 @@ loadBsGenome <- function(org) {
         if (bsOrg %in% BSgenome::installed.genomes())
             bsObj <- BSgenome::getBSgenome(getUcscOrganism(org))
         else {
-            BiocManager::install(bsOrg,update=FALSE,ask=FALSE)
-            bsObj <- BSgenome::getBSgenome(getUcscOrganism(org))
+            warning(bsOrg," BSgenome package is not installed! Please install ",
+                "it\nin order to have gene\nGC content available... Will ",
+                "continue with gc_content = NA for ",org)
+            bsObj <- NA
         }
         return(bsObj)
     }
@@ -2357,4 +2375,39 @@ cmclapply <- function(...,rc) {
     }
     
     return(list(organisms=organisms,sources=unique(df$refdb)))
+}
+
+.checkIfBSgenomesInstalled <- function(orgs,stopIfNotBS=FALSE) {
+    miss <- bsi <- rep(NA,length(orgs))
+    inst <- BSgenome::installed.genomes()
+    ii <- 1
+    for (org in orgs) {
+        bsOrg <- getBsOrganism(org,.warn=FALSE)
+        if (!(bsOrg %in% inst) && !is.na(bsOrg)) {
+            miss[ii] <- org
+            bsi[ii] <- bsOrg
+            ii <- ii + 1
+        }
+    }
+    if (!all(is.na(miss))) {
+        miss <- miss[!is.na(miss)]
+        bsi <- bsi[!is.na(bsi)]
+        
+        message("\nThe following BSgenome packages are missing:")
+        for (i in seq_along(miss))
+            message(bsi[i]," for ",miss[i])
+        message("")
+        
+        if (!stopIfNotBS) {
+            warning("Some requested organisms and sources require BSgenome ",
+                "packages which are not installed!\nPlease install them or ",
+                "the GC content in gene annotations will not be available...",
+                immediate.=TRUE)    
+        }
+        else
+            stop("Some requested organisms and sources require BSgenome ",
+                "packages which are not installed!\nPlease install them and ",
+                "restart building or choose stopIfNotBs = FALSE but\nthe GC ",
+                "content in gene annotations will not be available...")
+    }
 }
