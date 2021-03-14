@@ -1179,12 +1179,15 @@ getEnsemblAnnotation <- function(org,type,ver=NULL,tv=FALSE) {
         getBM(attributes=.getAttributes(org,type,ver,tv),mart=mart),
         error=function(e) {
             message("Caught error: ",e)
-            message("This error is most probably related to httr package ",
-                "internals! Using fallback solution...")
-            .myGetBM(attributes=.getAttributes(org,type,ver,tv),mart=mart)
+            message("This error is most probably related to biomaRt request ",
+                "timeouts! Using fallback solution...")
+            #https://github.com/grimbough/biomaRt/issues/22
+            .bypassTimeoutByFilters(org,type,ver,tv,mart)
+            #.myGetBM(attributes=.getAttributes(org,type,ver,tv),mart=mart)
         },
         finally=""
     )
+    
     if (type=="gene") {
         ann <- data.frame(
             chromosome=paste("chr",bm$chromosome_name,sep=""),

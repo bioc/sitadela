@@ -684,3 +684,21 @@
     else if (is(ch,"GRanges") && !asdf)
         return(ch)
 }
+
+.GENE_TYPES <- c("gene","pseudogene","transposable_element_gene")
+.TX_TYPES <- c("transcript","pseudogenic_transcript","primary_transcript",
+    "mRNA","ncRNA","rRNA","snoRNA","snRNA","tRNA","tmRNA","miRNA",
+    "miRNA_primary_transcript","RNase_P_RNA","RNase_MRP_RNA","SRP_RNA",
+    "misc_RNA","antisense_RNA", "antisense","lnc_RNA","antisense_lncRNA",
+    "transcript_region","pseudogenic_tRNA","scRNA","guide_RNA",
+    "telomerase_RNA","vault_RNA","Y_RNA")
+.EXON_TYPES <- c("exon","pseudogenic_exon","coding_exon",
+    "five_prime_coding_exon","interior_coding_exon",
+    "three_prime_coding_exon","exon_of_single_exon_gene","interior_exon",
+    "noncoding_exon","five_prime_noncoding_exon",
+    "three_prime_noncoding_exon")
+.CDS_TYPES <- c("CDS","transposable_element_CDS","CDS_predicted",
+    "edited_CDS")
+.STOP_CODON_TYPES <- "stop_codon"
+.GFF_FEATURE_TYPES <- c(.GENE_TYPES,.TX_TYPES,.EXON_TYPES,.CDS_TYPES,
+    .STOP_CODON_TYPES)

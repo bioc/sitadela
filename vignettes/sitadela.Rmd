@@ -307,9 +307,31 @@ if (.Platform$OS.type == "unix" && !grepl("^darwin",R.version$os)) {
 The next one is part of a custom annotation for the Ebola virus from UCSC:
 
 ```{r example-5, eval=TRUE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
-# Stub
-```
+if (.Platform$OS.type == "unix" && !grepl("^darwin",R.version$os)) {
+    gtf <- file.path(system.file(package="sitadela","extdata",
+        "eboVir3_KM034562v1.gtf.gz"))
+    chrom <- file.path(system.file(package="sitadela","extdata",
+        "eboVir3_KM034562v1.txt.gz"))
+    chromInfo <- read.delim(chrom,header=FALSE,row.names=1)
+    names(chromInfo) <- "length"
+    metadata <- list(
+        organism="gadMor1_HE567025",
+        source="sitadela_package",
+        chromInfo=chromInfo
+    )
+    tmpdb <- tempfile()
 
+    addCustomAnnotation(gtfFile=gtf,metadata=metadata,db=tmpdb)
+
+    # Try to retrieve some data
+    g <- loadAnnotation(genome="gadMor1_HE567025",refdb="sitadela_package",
+        type="gene",db=tmpdb)
+    g
+
+    # Delete the temporary database
+    unlink(tmpdb)
+}
+```
 
 Please note that complete annotations from UCSC require the `genePredToGtf`
 tool from the UCSC tools base and runs only on Linux. The tool is required

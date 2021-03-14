@@ -1,9 +1,43 @@
-.getAttributes <- function(org,type,ver=NULL,tv=FALSE) {
-    if (is.null(ver)) {
-        u2e <- .ucscToEnsembl()
-        vers <- u2e[[org]]
-        ver <- vers[length(vers)]
+.bypassTimeoutByFilters <- function(org,type,ver,tv,mart) {
+    filter <- .getFilter(org,type,ver,tv)
+    filterValues <- getBM(attributes=filter,mart=mart)
+    return(getBM(attributes=.getAttributes(org,type,ver,tv),filters=filter,
+        values=filterValues,mart=mart))
+}
+
+.getFilter <- function(org,type,ver=NULL,tv=FALSE) {
+    ver <- .checkEnsVer(ver,org)
+    if (type == "gene") {
+        if (tv)
+            return(.getVersionedFilter(org,"gene",ver))
+        else
+            return("ensembl_gene_id")
     }
+    else if (type == "exon")
+        return("ensembl_exon_id")
+    else if (type %in% c("transcript","utr","transexon")) {
+        if (tv)
+            return(.getVersionedFilter(org,"transcript",ver))
+        else
+            return("ensembl_transcript_id")
+    }
+}
+
+.getVersionedFilter <- function(org,type,ver) {
+    if (org %in% .orgsWithNoVersion())
+        return(paste0("ensembl_",type,"_id"))
+    else if (org %in% .orgsWithVersionAfter90()) {
+        if (ver < 90)
+            return(paste0("ensembl_",type,"_id"))
+        else
+            return(paste0("ensembl_",type,"_id_version"))
+    }
+    else if (org %in% .orgsWithVersion())
+        return(paste0("ensembl_",type,"_id_version"))
+}
+
+.getAttributes <- function(org,type,ver=NULL,tv=FALSE) {
+    ver <- .checkEnsVer(ver,org)
     switch(type,
         gene = {
             if (tv)
@@ -482,6 +516,15 @@
 
 .orgsWithVersion <- function() {
     return(c("danrer11","equcab3"))
+}
+
+.checkEnsVer <- function(ver,org) {
+    if (is.null(ver)) {
+        u2e <- .ucscToEnsembl()
+        vers <- u2e[[org]]
+        ver <- vers[length(vers)]
+    }
+    return(ver)
 }
 
 .getBiotypes <- function(org) {
