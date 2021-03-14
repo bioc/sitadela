@@ -15,7 +15,6 @@ Imports:
     GenomeInfoDb,
     GenomicFeatures,
     GenomicRanges,
-    httr,
     IRanges,
     methods,
     parallel,

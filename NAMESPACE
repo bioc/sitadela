@@ -31,9 +31,6 @@ importFrom("GenomicFeatures","seqlevels<-")
 importFrom("GenomicFeatures",transcripts)
 importFrom("GenomicFeatures",threeUTRsByTranscript)
 
-importFrom("httr",config)
-importFrom("httr",set_config)
-
 importFrom("IRanges",IRanges)
 importFrom("IRanges",slice)
 
