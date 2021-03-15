@@ -49,7 +49,7 @@ biocViews: Software, WorkflowStep, RNASeq, Transcription, Sequencing,
 VignetteBuilder: knitr
 BugReports: https://github.com/pmoulos/sitadela/issues
 Version: 0.99.4
-Date: 2021-03-14
+Date: 2021-03-15
 Collate:
     'argcheck.R'
     'fromtxdb.R'
