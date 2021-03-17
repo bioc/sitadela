@@ -158,7 +158,7 @@ default location of the annotation to your preferred location with the
 `setDbPath` function in the beginning of your script/function that uses the
 annotation database.
 
-In this vignette, we will build a minimal database comprising only the mouse
+In this example, we will build a minimal database comprising only the mouse
 *mm9* genome version from Ensembl. The database will be built in a temporary
 directory inside session `tempdir()`.
 
@@ -260,33 +260,63 @@ with the package. These are sample chromosomes from:
 Below, we test custom building with reference sequence HE567025 of Atlantic cod:
 
 ```
-if (.Platform$OS.type == "unix" && !grepl("^darwin",R.version$os)) {
-    gtf <- file.path(system.file(package="sitadela","extdata",
-        "gadMor1_HE567025.gtf.gz"))
-    chrom <- file.path(system.file(package="sitadela","extdata",
-        "gadMor1_HE567025.txt.gz"))
-    chromInfo <- read.delim(chrom,header=FALSE,row.names=1)
-    names(chromInfo) <- "length"
-    metadata <- list(
-        organism="gadMor1_HE567025",
-        source="sitadela_package",
-        chromInfo=chromInfo
-    )
-    tmpdb <- tempfile()
+gtf <- system.file(package="sitadela","extdata",
+    "gadMor1_HE567025.gtf.gz")
+chrom <- system.file(package="sitadela","extdata",
+    "gadMor1_HE567025.txt.gz")
+chromInfo <- read.delim(chrom,header=FALSE,row.names=1)
+names(chromInfo) <- "length"
+metadata <- list(
+    organism="gadMor1_HE567025",
+    source="sitadela_package",
+    chromInfo=chromInfo
+)
+tmpdb <- tempfile()
 
-    addCustomAnnotation(gtfFile=gtf,metadata=metadata,db=tmpdb)
+addCustomAnnotation(gtfFile=gtf,metadata=metadata,db=tmpdb)
 
-    # Try to retrieve some data
-    g <- loadAnnotation(genome="gadMor1_HE567025",refdb="sitadela_package",
-        type="gene",db=tmpdb)
-    g
+# Try to retrieve some data
+g <- loadAnnotation(genome="gadMor1_HE567025",refdb="sitadela_package",
+    type="gene",db=tmpdb)
+g
 
-    # Delete the temporary database
-    unlink(tmpdb)
-}
+# Delete the temporary database
+unlink(tmpdb)
 ```
 
-The next one is a custom annotation for the Ebola virus from UCSC:
+The next one is part of a custom annotation for the Ebola virus from UCSC:
+
+```{r example-5, eval=TRUE, echo=TRUE, tidy=FALSE, message=TRUE, warning=FALSE}
+gtf <- system.file(package="sitadela","extdata",
+    "eboVir3_KM034562v1.gtf.gz")
+chrom <- system.file(package="sitadela","extdata",
+    "eboVir3_KM034562v1.txt.gz")
+chromInfo <- read.delim(chrom,header=FALSE,row.names=1)
+names(chromInfo) <- "length"
+metadata <- list(
+    organism="gadMor1_HE567025",
+    source="sitadela_package",
+    chromInfo=chromInfo
+)
+tmpdb <- tempfile()
+
+addCustomAnnotation(gtfFile=gtf,metadata=metadata,db=tmpdb)
+
+# Try to retrieve some data
+g <- loadAnnotation(genome="gadMor1_HE567025",refdb="sitadela_package",
+    type="gene",db=tmpdb)
+g
+
+# Delete the temporary database
+unlink(tmpdb)
+```
+
+Please note that complete annotations from UCSC require the `genePredToGtf`
+tool from the UCSC tools base and runs only on Linux. The tool is required
+only for building 3' UTR annotations from UCSC, RefSeq and NCBI, all of which
+are being retrieved from the UCSC databases. The next example (full EBOLA virus
+annotation, not evaluated) demonstrates how this is done in a Unix based 
+machine:
 
 ```
 # Setup a temporary directory to download files etc.
@@ -407,30 +437,39 @@ if (.Platform$OS.type == "unix") {
 ```
 
 Another example, Armadillo from Ensembl. This should work irrespectively of 
-operating system. We are downloading chromosomal information from UCSC.
+operating system. We are downloading chromosomal information from UCSC. Again,
+a small dataset included in the package is included in this vignette. See the
+commented code below for the full annotation case.
 
 ```
-# Gene annotation dump from Ensembl
-download.file(paste0("ftp://ftp.ensembl.org/pub/release-98/gtf/",
-    "dasypus_novemcinctus/Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz"),
-    file.path(customDir,"Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz"))
+## Gene annotation dump from Ensembl
+#download.file(paste0("ftp://ftp.ensembl.org/pub/release-98/gtf/",
+#    "dasypus_novemcinctus/Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz"),
+#    file.path(customDir,"Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz"))
+#
+# gtfFile <- file.path(customDir,"Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz")
+#
+## Chromosome information will be provided from the following BAM file
+## available from Ensembl. We have noticed that when using Windows as the OS,
+## a remote BAM file cannot be opened by scanBamParam, so for this example,
+## chromosome length information will not be available when running in Windows.
+#chromInfo <- NULL
+#if (.Platform$OS.type == "unix")
+#    chromInfo <- paste0("ftp://ftp.ensembl.org/pub/release-98/bamcov/",
+#        "dasypus_novemcinctus/genebuild/Dasnov3.broad.Ascending_Colon_5.1.bam")
 
-# Chromosome information will be provided from the following BAM file
-# available from Ensembl. We have noticed that when using Windows as the OS,
-# a remote BAM files cannot be opened by scanBamParam, so for this example,
-# chromosome length information will not be available when running in Windows.
-bamForInfo <- NULL
-if (.Platform$OS.type == "unix")
-    bamForInfo <- paste0("ftp://ftp.ensembl.org/pub/release-98/bamcov/",
-        "dasypus_novemcinctus/genebuild/Dasnov3.broad.Ascending_Colon_5.1.bam")
+gtfFile <- system.file(package="sitadela","extdata",
+    "dasNov3_JH569334.gtf.gz")
+chromInfo <- read.delim(system.file(package="sitadela",
+    "extdata","dasNov3_JH569334.txt.gz"),header=FALSE)
 
 # Build with the metadata list filled (you can also provide a version)
 addCustomAnnotation(
-    gtfFile=file.path(customDir,"Dasypus_novemcinctus.Dasnov3.0.98.gtf.gz"),
+    gtfFile=gtfFile,
     metadata=list(
         organism="dasNov3_test",
         source="ensembl_test",
-        chromInfo=bamForInfo
+        chromInfo=chromInfo
     ),
     db=myDb
 )
