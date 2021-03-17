@@ -4,21 +4,17 @@ test_sitadela_known <- function() {
 }
 
 test_sitadela_gtf <- function() {
-    if (.Platform$OS.type == "unix" && !grepl("^darwin",R.version$os)) {
-        gtf <- file.path(system.file(package="sitadela"),"dummy.gtf.gz")
-        chromInfo <- data.frame(length=c(1000L,2000L,1500L),
-            row.names=c("A","B","C"))
-        metadata=list(
-            organism="dummy",
-            source="dummy_db",
-            version=1,
-            chromInfo=chromInfo
-        )
-        testResult <- testCustomBuild(gtf,metadata)
-        checkTrue(all(testResult))
-    }
-    else
-        checkTrue(TRUE)
+    gtf <- file.path(system.file(package="sitadela"),"dummy.gtf.gz")
+    chromInfo <- data.frame(length=c(1000L,2000L,1500L),
+        row.names=c("A","B","C"))
+    metadata=list(
+        organism="dummy",
+        source="dummy_db",
+        version=1,
+        chromInfo=chromInfo
+    )
+    testResult <- testCustomBuild(gtf,metadata)
+    checkTrue(all(testResult))
 }
 
 test_sitadela_ensembl_often <- function() {

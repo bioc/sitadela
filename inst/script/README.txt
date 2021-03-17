@@ -17,3 +17,8 @@ A GTF file with the reference sequence LG3 of the European bass (Dicentrarchus
 labrax) retrieved from Max Planck Institute for Molecular Genetics, Berlin
 (http://seabass.mpipz.mpg.de/), along with the length of the sequence, required
 for a more complete custom annotation build.
+
+4. eboVir3_ncbiGene.gtf.gz and eboVir3_ncbiGene.txt.gz
+A GTF file with the genome sequence of the EBOLA virus retrieved from UCSC, 
+along with the length of the sequence, required for a more complete custom 
+annotation build.

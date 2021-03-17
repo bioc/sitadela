@@ -20,7 +20,7 @@ Imports:
     parallel,
     Rsamtools,
     RSQLite,
-    BiocIO,
+    rtracklayer,
     S4Vectors,
     utils
 Suggests:
@@ -48,8 +48,8 @@ biocViews: Software, WorkflowStep, RNASeq, Transcription, Sequencing,
     SystemsBiology, AlternativeSplicing, DataImport, ChIPSeq
 VignetteBuilder: knitr
 BugReports: https://github.com/pmoulos/sitadela/issues
-Version: 0.99.4
-Date: 2021-03-15
+Version: 0.99.5
+Date: 2021-03-17
 Collate:
     'argcheck.R'
     'fromtxdb.R'
