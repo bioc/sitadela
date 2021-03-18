@@ -19,6 +19,10 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
     message("\n********************************************************")
     message("This is sitadela ",pv," genomic region annotation builder")
     message("********************************************************")
+    
+    # Check database path
+    .checkDbPath(db)
+    
     while(!complete && times<=retries) {
         message("\n========================================================")
         message(format(Sys.time(),"%Y-%m-%d %H:%M:%S")," - Try ",times)
@@ -92,10 +96,6 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
     if (!requireNamespace("GenomeInfoDb"))
         stop("R package GenomeInfoDb is required to construct annotation ",
             "stores!")
-    
-    # Check database path
-    if (!dir.exists(dirname(db)))
-        dir.create(dirname(db),recursive=TRUE,mode="0755")
     
     # Initialize or open the annotation SQLite datatabase
     message("Opening sitadela SQLite database ",db)
@@ -908,8 +908,7 @@ addCustomAnnotation <- function(gtfFile,metadata,db=getDbPath(),rewrite=TRUE) {
 # exon       : GRanges with (summarized) exons
 loadAnnotation <- function(genome,refdb,type=c("gene","transcript","utr",
     "transutr","transexon","exon"),version="auto",wtv=FALSE,
-    db=file.path(system.file(package="sitadela"),"annotation.sqlite"),
-    summarized=FALSE,asdf=FALSE,rc=NULL) {
+    db=getDbPath(),summarized=FALSE,asdf=FALSE,rc=NULL) {
     if (!requireNamespace("RSQLite"))
         stop("R package RSQLite is required to load annotation from database!")
     
@@ -1744,7 +1743,7 @@ setDbPath <- function(db=NULL) {
         if (!is.character(db)) {
             warning("The path to the sitadela database must be a valid path ",
                 "to a file which\nwill be created if not existing! Assuming ",
-                "default...",immediate..=TRUE)
+                "default...",immediate.=TRUE)
             db <- .defaultDbPath()
         }
     }
@@ -1762,8 +1761,12 @@ setDbPath <- function(db=NULL) {
 
 getDbPath <- function() {
     db <- getOption("BioC")$sitadela
-    if (!is.null(db))
-        return(db)
+    if (!is.null(db) && is.character(db)) {
+        if (file.exists(db))
+            return(db)
+        else
+            return(.defaultDbPath())
+    }
     else
         return(.defaultDbPath())
 }
@@ -2348,7 +2351,46 @@ cmclapply <- function(...,rc) {
 }
 
 .defaultDbPath <- function() {
-    return(file.path(system.file(package="sitadela"),"annotation.sqlite"))
+    # We end up here if option for sitadela database path does not exist or has
+    # not been provided by the user
+    defPath <- .getDefaultDbPath()
+    
+    # User conformation only if database path not provided explicitly by the
+    # user. If provided explicitly, user knows a database is going to be created
+    # at the user-specified path.
+    if (!interactive())
+        .checkDbPath(defPath)
+    else {
+        if (!dir.exists(dirname(defPath))) {
+            confirm <- menu(c("Yes","No"),
+                title=sprintf(paste0("The sitadela database is going to be ",
+                    "created at %s. Do you agree?"),defPath))
+            if (confirm == 1)
+                .checkDbPath()
+            else
+                stop(paste0("The sitadela database cannot be created without user ",
+                    "agreement.\nPlease agree or use the 'db' argument in the ",
+                    "'addAnnotation' function."))
+        }        
+    }
+    
+    return(defPath)
+}
+
+.checkDbPath <- function(db=NULL) {
+    if (missing(db) || is.null(db))
+        db <- .getDefaultDbPath()
+    dbd <- dirname(db)
+    if (!dir.exists(dbd)) {
+        message("sitadela database created at ",dbd," directory")
+        dir.create(dbd,recursive=TRUE,mode="0755",showWarnings=FALSE)
+    }
+    else
+        message("sitadela database found at ",dbd," directory")
+}
+
+.getDefaultDbPath <- function() {
+    return(file.path(tools::R_user_dir("sitadela","data"),"annotation.sqlite"))
 }
 
 .collapseFailures <- function(f) {

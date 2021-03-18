@@ -6,9 +6,8 @@
         type = c("gene", "transcript", "utr",
             "transutr", "transexon", "exon"), 
         version="auto", wtv = FALSE,
-        db = file.path(system.file(package = "sitadela"),
-            "annotation.sqlite"), 
-        summarized = FALSE, asdf = FALSE, rc = NULL)
+        db = getDbPath(), summarized = FALSE,
+        asdf = FALSE, rc = NULL)
 }
 \arguments{
     \item{genome}{a sitadela supported organism or a custom 

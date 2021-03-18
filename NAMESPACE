@@ -42,8 +42,11 @@ importFrom("S4Vectors",subjectHits)
 
 importFrom("rtracklayer",import)
 
+importFrom("tools",R_user_dir)
+
 importFrom("utils",download.file)
 importFrom("utils",head)
+importFrom("utils","menu")
 importFrom("utils",packageVersion)
 importFrom("utils",read.delim)
 importFrom("utils",read.table)
