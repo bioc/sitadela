@@ -1747,20 +1747,11 @@ setDbPath <- function(db=NULL) {
             db <- .defaultDbPath()
         }
     }
-    
-    if (is.null(getOption("BioC"))) {
-        BioC <- list()
-        class(BioC) <- "BioCOptions"
-        options("BioC"=BioC)
-    }
-
-    BioC <- getOption("BioC")
-    BioC$sitadela <- db
-    options("BioC"=BioC)
+    options("sitadela_dbpath"=db)
 }
 
 getDbPath <- function() {
-    db <- getOption("BioC")$sitadela
+    db <- getOption("sitadela_dbpath")
     if (!is.null(db) && is.character(db)) {
         if (file.exists(db))
             return(db)
