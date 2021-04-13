@@ -33,7 +33,7 @@ These packages, are primarily designed to capture genomic structures (genes,
 transcripts, exons etc.) accurately and place them in a genomic interval content
 suitable for fast calculations. While this is more than sufficient for many 
 users and work out-of-the-box, especially for less experienced R users, they may
-miss certain characteristics which may be useful also for many users. Such
+miss certain characteristics which may be also useful for many users. Such
 additional elements are often required by tools that report e.g. transcript
 biotypes (such as those in Ensembl) and do not gather mappings between elements
 of the same annotation (e.g. gene, transcript, exon ids) in one place in a more
@@ -82,7 +82,7 @@ supplies them to the `addAnnotation` function which in turn creates a new or
 updates a current database. A custom, non-directly supported organism annotation
 can be imported through the `addCustomAnnotation` function and annotations not
 needed anymore can be removed with the `removeAnnotation` function. Finally, as
-the building can require some time, especially if many organisms and sources are
+the built can require some time, especially if many organisms and sources are
 required for a local database, we maintain pre-built databases which are built
 periodically (e.g. upon a new Ensembl release).
 
@@ -130,7 +130,7 @@ organisms and therefore GC contents will not be available anyway.
 
 Is is therefore advised to install these `BSgenome` packages in advance.
 
-# Using the local database
+# Building and using a SiTaDelA local database
 
 ## Installation of sitadela
 
@@ -142,25 +142,34 @@ if(!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install("sitadela")
 ```
 
+To install the latest (perhaps non-stable) version:
+
+```
+library(remotes)
+remotes::install_github("pmoulos/sitadela")
+```
+
 ## Setup the database
 
 By default, the database file will be written in the
-`system.file(package="sitadela")` directory. You can specify another prefered
-destination for it using the `db` argument in the function call, but if you do 
-that, you will have to supply an argument pointing to the SQLite database file
-you created to every sitadela package function call you perform, or any other
-function that uses sitadela annotations, otherwise, the annotation will be
-downloaded and formatted on-the-fly instead of using the local database. Upon
-loading `sitadela`, an option is added to the R environment pointing to the
-default `sitadela` annotation database. If you wish to change that location and
-do not wish to supply the database to other function calls, you can change the
-default location of the annotation to your preferred location with the 
-`setDbPath` function in the beginning of your script/function that uses the
-annotation database.
+`tools::R_user_dir("sitadela","data")` directory and the file is called 
+`"annotation.sqlite"`. By default the build function will ask for the path where
+the database will be installed. You can specify another prefered destination for 
+it using the `db` argument in the function call, but if you do that, you will 
+have to supply an argument pointing to the SQLite database file you created to 
+every sitadela package function call you perform, or any other function that 
+uses sitadela annotations, otherwise, the annotation will be downloaded and
+formatted on-the-fly instead of using the local database. Upon loading 
+`sitadela`, an option is added to the R environment pointing to the default
+`sitadela` annotation database. If you wish to change that location and do not
+wish to supply the database to other function calls, you can change the default
+location of the annotation to your preferred location with the `setDbPath`
+function in the beginning of your script/function that uses the annotation 
+database.
 
 In this example, we will build a minimal database comprising only the mouse
 *mm9* genome version from Ensembl. The database will be built in a temporary
-directory inside session `tempdir()`.
+directory inside the current R session's `tempdir()`.
 
 **Important note**: As the annotation build function makes use of 
 [Kent](http://hgdownload.soe.ucsc.edu/admin/exe/) utilities for creating 3'UTR
@@ -248,7 +257,8 @@ in the function's help page.
 
 **Important note:** Please note that importing a custom genome annotation 
 directly from UCSC (UCSC SQL database dumps) is not supported in Windows as the
-process involves using the `genePredToGtf` which is not available for Windows.
+process involves using the `genePredToGtf` program which is not available for
+Windows.
 
 Let's try a couple of examples. The first one uses example GTF files shipped
 with the package. These are sample chromosomes from:
@@ -311,12 +321,11 @@ g
 unlink(tmpdb)
 ```
 
-Please note that complete annotations from UCSC require the `genePredToGtf`
-tool from the UCSC tools base and runs only on Linux. The tool is required
-only for building 3' UTR annotations from UCSC, RefSeq and NCBI, all of which
-are being retrieved from the UCSC databases. The next example (full EBOLA virus
-annotation, not evaluated) demonstrates how this is done in a Unix based 
-machine:
+Again, please note that complete annotations from UCSC require the 
+`genePredToGtf` tool from the UCSC tools base and runs only on Linux. The tool 
+is required only for building 3' UTR annotations from UCSC, RefSeq and NCBI, all
+of which are being retrieved from the UCSC databases. The next example (full 
+EBOLA virus annotation) demonstrates how this is done in a Unix based machine:
 
 ```
 # Setup a temporary directory to download files etc.
@@ -515,7 +524,7 @@ addAnnotation(organisms,sources,forceDownload=FALSE,rc=0.5)
 The aforementioned complete built can be found
 [here](https://drive.google.com/drive/folders/14vIQBL2iNlVtHkhhbjSMwt04-ZuDAuuR?usp=sharing)
 Complete builts will become available from time to time (e.g. with every new
-Ensembl relrase) for users who do not wish to create annotation databases on
+Ensembl release) for users who do not wish to create annotation databases on
 their own. Root access may be required (depending on the sitadela library
 location) to place it in the default location where it can be found 
 automatically.
@@ -544,4 +553,3 @@ respective position.
 
 For further details about custom annotations on the fly, please check
 `addCustomAnnotation` and `importCustomAnnotation` functions.
-

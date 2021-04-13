@@ -42,11 +42,9 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
                     "Version: ",buildResult$failed[[i]]$ver," - ",
                     "Versioned IDs: ",buildResult$failed[[i]]$tv)
             message("Will retry ",retries-times," times...")
-            
             newRun <- .collapseFailures(buildResult$failed)
-            .annotationWorker(organisms=newRun$organisms,
-                sources=newRun$sources,db=db,versioned=versioned,
-                forceDownload=forceDownload,rc=rc)
+            organisms <- newRun$organisms
+            sources <- newRun$sources
             message("-------------------------------------------------------\n")
         }
         else {
@@ -57,9 +55,6 @@ addAnnotation <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
 
         times <- times + 1
     }
-
-    #.annotationWorker(organisms=organisms,sources=sources,db=db,
-    #    versioned=versioned,forceDownload=forceDownload,rc=rc)
 }
 
 .annotationWorker <- function(organisms,sources,db=getDbPath(),versioned=FALSE,
