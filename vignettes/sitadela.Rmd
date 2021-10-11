@@ -196,7 +196,7 @@ dir.create(buildDir)
 myDb <- file.path(buildDir,"testann.sqlite")
 
 # Since we are using Ensembl, we can also ask for a version
-organisms <- list(mm10=75)
+organisms <- list(mm10=100)
 sources <- ifelse(.Platform$OS.type=="unix",c("ensembl","refseq"),"ensembl")
 
 # If the example is not running in a multicore system, rc is ignored
@@ -228,12 +228,12 @@ sumEx <- loadAnnotation(genome="mm10",refdb="ensembl",type="exon",
     summarized=TRUE,db=myDb)
 sumEx
 
-# Load standard annotation based on gene body coordinates from RefSeq
-if (.Platform$OS.type=="unix") {
-    refGenes <- loadAnnotation(genome="mm10",refdb="refseq",type="gene",
-        db=myDb)
-    refGenes
-}
+## Load standard annotation based on gene body coordinates from RefSeq
+#if (.Platform$OS.type=="unix") {
+#    refGenes <- loadAnnotation(genome="mm10",refdb="refseq",type="gene",
+#        db=myDb)
+#    refGenes
+#}
 ```
 
 Or as a data frame if you prefer using `asdf=TRUE`. The data frame however does 
