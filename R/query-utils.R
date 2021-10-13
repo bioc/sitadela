@@ -987,7 +987,8 @@ getUcscDbl <- function(org,refdb="ucsc",versioned=FALSE) {
 
 .getUcscCredentials <- function() {
     return(c(
-        host="genome-mysql.cse.ucsc.edu",
+        #host="genome-mysql.cse.ucsc.edu",
+        host="genome-mysql.soe.ucsc.edu",
         user="genome",
         password=""
     ))
