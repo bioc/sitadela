@@ -375,23 +375,23 @@
     return(list(
         hg18=67,
         hg19=75,
-        hg38=77:104,
+        hg38=77:105,
         mm9=67,
-        mm10=88:104,
+        mm10=88:105,
         rn5=77,
-        rn6=88:104,
+        rn6=88:105,
         dm3=77,
-        dm6=88:104,
+        dm6=88:105,
         danrer7=77,
         danrer10=88:91,
-        danrer11=92:104,
+        danrer11=92:105,
         pantro4=88:90,
-        pantro5=91:104,
+        pantro5=91:105,
         #pantro6=,
         susscr3=88:89,
-        susscr11=90:104,
+        susscr11=90:105,
         equcab2=88:94,
-        equcab3=95:104
+        equcab3=95:105
     ))
 }
 
