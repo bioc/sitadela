@@ -425,7 +425,7 @@
     i <- grep(as.character(ver),ea[,"version"])
     if (length(i) > 0) {
         if (ea[i,"current_release"] == "*")
-            return("http://www.ensembl.org")
+            return("https://www.ensembl.org")
         else
             return(ea[i,"url"])
     }

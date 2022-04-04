@@ -1163,10 +1163,12 @@ getEnsemblAnnotation <- function(org,type,ver=NULL,tv=FALSE) {
     if (org=="tair10")
         dat <- "plants_mart"
     else
-        dat <- "ENSEMBL_MART_ENSEMBL"
+        #dat <- "ENSEMBL_MART_ENSEMBL"
+        dat <- "genes"
     host <- .getHost(org,ver)
     message("Using Ensembl host ",host)
-    mart <- useMart(biomart=dat,host=host,dataset=.getDataset(org))
+    #mart <- useMart(biomart=dat,host=host,dataset=.getDataset(org))
+    mart <- useEnsembl(biomart=dat,host=host,dataset=.getDataset(org))
 
     chrsExp <- paste("^",.getValidChrs(org),"$",sep="",collapse="|")
     bm <- tryCatch(
@@ -2156,10 +2158,10 @@ cmclapply <- function(...,rc) {
 }
 
 .chromInfoWrapperGID <- function(o) {
-    if (packageVersion("GenomeInfoDb")>=1.23)
+    #if (packageVersion("GenomeInfoDb")>=1.23)
         return(GenomeInfoDb::getChromInfoFromUCSC(o))
-    else
-        return(GenomeInfoDb::fetchExtendedChromInfoFromUCSC(o))
+    #else
+    #    return(GenomeInfoDb::fetchExtendedChromInfoFromUCSC(o))
 }
 
 .validateDbCon <- function(obj) {
