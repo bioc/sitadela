@@ -10,6 +10,7 @@ vignette: >
   %\VignetteIndexEntry{Building a simple annotation database}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{BiocStyle}
 ---
 
 Simple, flexible and reusable tab-delimited genome annotations
