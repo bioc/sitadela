@@ -73,7 +73,7 @@
 }
 
 .getGeneAttributes <- function(org) {
-    if (org %in% c("hg18","hg19","mm9","tair10"))
+    if (org %in% c("hg18","hg19","mm9"))
         return(c(
             "chromosome_name",
             "start_position",
@@ -140,7 +140,7 @@
 }
 
 .getTranscriptAttributes <- function(org) {
-    if (org %in% c("hg18","hg19","mm9","tair10"))
+    if (org %in% c("hg18","hg19","mm9"))
         return(c(
             "chromosome_name",
             "transcript_start",
@@ -196,7 +196,7 @@
 }
 
 .getTranscriptUtrAttributes <- function(org) {
-    if (org %in% c("hg18","hg19","mm9","tair10"))
+    if (org %in% c("hg18","hg19","mm9"))
         return(c(
             "chromosome_name",
             "transcript_start",
@@ -260,7 +260,7 @@
 }
 
 .getExonAttributes <- function(org) {
-    if (org %in% c("hg18","hg19","mm9","tair10"))
+    if (org %in% c("hg18","hg19","mm9"))
         return(c(
             "chromosome_name",
             "exon_chrom_start",
@@ -316,7 +316,7 @@
 }
 
 .getTranscriptExonAttributes <- function(org) {
-    if (org %in% c("hg18","hg19","mm9","tair10"))
+    if (org %in% c("hg18","hg19","mm9"))
         return(c(
             "chromosome_name",
             "exon_chrom_start",
@@ -373,25 +373,25 @@
 
 .ucscToEnsembl <- function() {
     return(list(
-        hg18=67,
+        hg18=54,
         hg19=75,
-        hg38=88:109,
-        mm9=67,
-        mm10=88:109,
+        hg38=95:111,
+        mm9=54,
+        mm10=95:111,
         rn5=77,
-        rn6=88:109,
-        dm3=77,
-        dm6=88:109,
-        danrer7=77,
-        danrer10=88:91,
-        danrer11=92:109,
-        pantro4=88:90,
-        pantro5=91:109,
+        rn6=c(80,95:111),
+        dm3=c(75,77),
+        dm6=c(80,95:111),
+        danrer7=c(75,77),
+        danrer10=80,
+        danrer11=95:111,
+        pantro4=c(75,77,80),
+        pantro5=95:111,
         #pantro6=,
-        susscr3=88:89,
-        susscr11=90:109,
-        equcab2=88:94,
-        equcab3=95:109
+        susscr3=c(75,77,80),
+        susscr11=95:111,
+        equcab2=c(75,77),
+        equcab3=95:111
     ))
 }
 

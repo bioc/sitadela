@@ -1569,7 +1569,7 @@ getSeqInfo <- function(org,asSeqinfo=FALSE) {
     sf <- sf[.getValidChrs(org),]
     if (asSeqinfo)
         return(Seqinfo(seqnames=sf[,1],seqlengths=sf[,2],
-            isCircular=sf[,3],genome=getUcscOrganism(org)))
+            isCircular=sf[,"circular"],genome=getUcscOrganism(org)))
     else
         return(data.frame(chromosome=sf[,1],length=as.integer(sf[,2])))
 }
@@ -2158,10 +2158,13 @@ cmclapply <- function(...,rc) {
 }
 
 .chromInfoWrapperGID <- function(o) {
-    #if (packageVersion("GenomeInfoDb")>=1.23)
+    if (o == "TAIR10") {
+        g <- GenomeInfoDb::getChromInfoFromEnsembl(o,division="plants")
+        g$name = paste("chr",g$name,sep="")
+        return(g)
+    }
+    else
         return(GenomeInfoDb::getChromInfoFromUCSC(o))
-    #else
-    #    return(GenomeInfoDb::fetchExtendedChromInfoFromUCSC(o))
 }
 
 .validateDbCon <- function(obj) {

@@ -5,3 +5,10 @@ NEW FEATURES
 
     o First release
 
+CHANGES IN VERSION 1.11.1 (2024-03-07)
+-------------------------------------
+
+NEW FEATURES
+
+    o Updated Ensembl supported versions based on biomaRt
+
