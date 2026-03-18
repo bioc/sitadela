@@ -62,6 +62,20 @@
                 refFlat=.getUcscTblTpl("refFlat",what)
             ))
         },
+        mm39 = {
+            return(list(
+                knownCanonical=
+                    .getUcscTblTpl("knownCanonical",what),
+                knownGene=.getUcscTblTpl("knownGene",what),
+                knownToRefSeq=
+                    .getUcscTblTpl("knownToRefSeq",what),
+                knownToEnsembl=
+                    .getUcscTblTpl("knownToEnsembl",what),
+                ensemblSource=
+                    .getUcscTblTpl("ensemblSource",what),
+                refFlat=.getUcscTblTpl("refFlat",what)
+            ))
+        },
         rn5 = {
             return(list(
                 mgcGenes=.getUcscTblTpl("mgcGenes",what),
@@ -329,6 +343,24 @@
             #   "GROUP BY `gene_id`",
             #   "ORDER BY `chromosome`,`start`"))
             ## No Ensembl source...
+            return(paste("SELECT knownCanonical.chrom AS `chromosome`,",
+                "`chromStart` AS `start`,",
+                "`chromEnd` AS `end`,",
+                "`transcript` AS `gene_id`,",
+                "0 AS `gc_content`,",
+                "knownGene.strand AS `strand`,",
+                "`geneName` AS `gene_name`,",
+                "'NA' AS `biotype`",
+                "FROM `knownCanonical` INNER JOIN `knownGene`",
+                "ON knownCanonical.transcript=knownGene.name",
+                "INNER JOIN `knownToRefSeq`",
+                "ON knownCanonical.transcript=knownToRefSeq.name",
+                "INNER JOIN `refFlat`",
+                "ON knownToRefSeq.value=refFlat.name",
+                "GROUP BY gene_id",
+                "ORDER BY `chromosome`,`start`"))
+        },
+        mm39 = {
             return(paste("SELECT knownCanonical.chrom AS `chromosome`,",
                 "`chromStart` AS `start`,",
                 "`chromEnd` AS `end`,",
@@ -785,6 +817,21 @@
                 "GROUP BY knownGene.name",
                 "ORDER BY `chromosome`,`start`"))
         },
+        mm39 = {
+            return(paste("SELECT knownGene.chrom AS `chromosome`,",
+                "knownGene.txStart AS `start`,",
+                "knownGene.txEnd AS `end`,",
+                "knownGene.name AS `transcript_id`,",
+                "knownGene.strand AS `strand`,",
+                "`geneName` AS `gene_name`,",
+                "'NA' AS `biotype`",
+                "FROM `knownGene` INNER JOIN `knownToRefSeq`",
+                "ON knownGene.name=knownToRefSeq.name",
+                "INNER JOIN `refFlat`",
+                "ON knownToRefSeq.value=refFlat.name",
+                "GROUP BY knownGene.name",
+                "ORDER BY `chromosome`,`start`"))
+        },
         rn5 = {
             #return(paste("SELECT mgcGenes.chrom AS `chromosome`,",
             #    "`txStart` AS `start`,",
@@ -1159,6 +1206,24 @@
             #   "GROUP BY knownGene.name",
             #   "ORDER BY `chromosome`,`start`"))
             ## No Ensembl source...
+            return(paste("SELECT knownGene.chrom AS `chromosome`,",
+                "knownGene.exonStarts AS `start`,",
+                "knownGene.exonEnds AS `end`,",
+                "knownGene.name AS `exon_id`,",
+                "knownGene.strand AS `strand`,",
+                "`transcript` AS `gene_id`,",
+                "`geneName` AS `gene_name`,",
+                "'NA' AS `biotype`",
+                "FROM `knownGene` INNER JOIN `knownCanonical`", 
+                "ON knownGene.name=knownCanonical.transcript",
+                "INNER JOIN `knownToRefSeq`",
+                "ON knownCanonical.transcript=knownToRefSeq.name",
+                "INNER JOIN `refFlat`",
+                "ON knownToRefSeq.value=refFlat.name",
+                "GROUP BY knownGene.name",
+                "ORDER BY `chromosome`,`start`"))
+        },
+        mm39 = {
             return(paste("SELECT knownGene.chrom AS `chromosome`,",
                 "knownGene.exonStarts AS `start`,",
                 "knownGene.exonEnds AS `end`,",

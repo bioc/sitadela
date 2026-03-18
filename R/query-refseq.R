@@ -57,6 +57,19 @@
                     .getUcscTblTpl("ensemblSource",what)
             )
         },
+        mm39 = {
+            def <- list(
+                refFlat=.getUcscTblTpl("refFlat",what),
+                knownToRefSeq=
+                    .getUcscTblTpl("knownToRefSeq",what),
+                knownCanonical=
+                    .getUcscTblTpl("knownCanonical",what),
+                knownToEnsembl=
+                    .getUcscTblTpl("knownToEnsembl",what),
+                ensemblSource=
+                    .getUcscTblTpl("ensemblSource",what)
+            )
+        },
         rn5 = {
             def <- list(
                 refFlat=.getUcscTblTpl("refFlat",what),
@@ -290,6 +303,30 @@
                 "ORDER BY `chromosome`,`start`"))
         },
         mm10 = {
+            return(paste("SELECT  refFlat.chrom AS `chromosome`,",
+                "refFlat.txStart AS `start`,",
+                "refFlat.txEnd AS `end`,",
+                if (versioned)
+                    paste0("CONCAT(refFlat.name,'.',",
+                        "hgFixed.gbCdnaInfo.version) AS `gene_id`,")
+                else
+                    "refFlat.name AS `gene_id`,",
+                "0 AS `gc_content`,",
+                "refFlat.strand AS `strand`,",
+                "refFlat.geneName AS `gene_name`,",
+                "'NA' AS `biotype`",
+                "FROM `refFlat` INNER JOIN `knownToRefSeq`",
+                "ON refFlat.name=knownToRefSeq.value",
+                "INNER JOIN `knownCanonical`",
+                "ON knownToRefSeq.name=knownCanonical.transcript",
+                if (versioned)
+                    paste("INNER JOIN hgFixed.gbCdnaInfo",
+                        "ON refFlat.name=hgFixed.gbCdnaInfo.acc")
+                else "",
+                "GROUP BY refFlat.name",
+                "ORDER BY `chromosome`,`start`"))
+        },
+        mm39 = {
             return(paste("SELECT  refFlat.chrom AS `chromosome`,",
                 "refFlat.txStart AS `start`,",
                 "refFlat.txEnd AS `end`,",
@@ -788,6 +825,28 @@
                 else "",
                 "ORDER BY `chromosome`, `start`"))
         },
+        mm39 = {
+            return(paste("SELECT refFlat.chrom AS `chromosome`,",
+                "refFlat.txStart AS `start`,",
+                "refFlat.txEnd AS `end`,",
+                if (versioned)
+                    paste0("CONCAT(refFlat.name,'.',",
+                        "hgFixed.gbCdnaInfo.version) AS `transcript_id`,")
+                else
+                    "refFlat.name AS `transcript_id`,",
+                "refFlat.strand AS `strand`,",
+                "refFlat.geneName AS `gene_name`,",
+                "'NA' AS `biotype`",
+                "FROM `refFlat` INNER JOIN `knownToRefSeq`",
+                "ON refFlat.name=knownToRefSeq.value",
+                "INNER JOIN `knownCanonical`",
+                "ON knownToRefSeq.name=knownCanonical.transcript",
+                if (versioned)
+                    paste("INNER JOIN hgFixed.gbCdnaInfo",
+                        "ON refFlat.name=hgFixed.gbCdnaInfo.acc")
+                else "",
+                "ORDER BY `chromosome`, `start`"))
+        },
         rn5 = {
             return(paste("SELECT refFlat.chrom AS `chromosome`,",
                 "refFlat.txStart AS `start`,",
@@ -1214,6 +1273,34 @@
                 "ORDER BY `chromosome`,`start`"))
         },
         mm10 = {
+            return(paste("SELECT refFlat.chrom AS `chromosome`,",
+                "refFlat.exonStarts AS `start`,",
+                "refFlat.exonEnds  AS `end`,",
+                if (versioned)
+                    paste0("CONCAT(refFlat.name,'.',",
+                        "hgFixed.gbCdnaInfo.version) AS `exon_id`,")
+                else
+                    "refFlat.name AS `exon_id`,",
+                "refFlat.strand AS `strand`,",
+                if (versioned)
+                    paste0("CONCAT(refFlat.name,'.',",
+                        "hgFixed.gbCdnaInfo.version) AS `gene_id`,")
+                else
+                    "refFlat.name AS `gene_id`,",
+                "refFlat.geneName AS `gene_name`,",
+                "'NA' AS `biotype`",
+                "FROM `refFlat` INNER JOIN `knownToRefSeq`", 
+                "ON refFlat.name=knownToRefSeq.value",
+                "INNER JOIN `knownCanonical`",
+                "ON knownToRefSeq.name=knownCanonical.transcript",
+                if (versioned)
+                    paste("INNER JOIN hgFixed.gbCdnaInfo",
+                        "ON refFlat.name=hgFixed.gbCdnaInfo.acc")
+                else "",
+                "GROUP BY refFlat.name",
+                "ORDER BY `chromosome`,`start`"))
+        },
+        mm39 = {
             return(paste("SELECT refFlat.chrom AS `chromosome`,",
                 "refFlat.exonStarts AS `start`,",
                 "refFlat.exonEnds  AS `end`,",
