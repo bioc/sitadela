@@ -1581,6 +1581,7 @@ getUcscOrganism <- function(org) {
         hg38 = { return("hg38") },
         mm9 = { return("mm9") },
         mm10 = { return("mm10") },
+        mm39 = { return("mm39") },
         rn5 = { return("rn5") },
         rn6 = { return("rn6") },
         dm3 = { return("dm3") },
@@ -1614,6 +1615,9 @@ getBsOrganism <- function(org,.warn=TRUE) {
         },
         mm10 = {
             return("BSgenome.Mmusculus.UCSC.mm10")
+        },
+        mm39 = {
+            return("BSgenome.Mmusculus.UCSC.mm39")
         },
         rn5 = {
             return("BSgenome.Rnorvegicus.UCSC.rn5")
@@ -1724,7 +1728,7 @@ getSupportedRefDbs <- function() {
 }
 
 getSupportedOrganisms <- function() {
-    return(c("hg18","hg19","hg38","mm9","mm10","rn5","rn6","dm3","dm6",
+    return(c("hg18","hg19","hg38","mm9","mm10","mm39","rn5","rn6","dm3","dm6",
         "danrer7","danrer10","danrer11","pantro4","pantro5",#"pantro6",
         "susscr3","susscr11","equcab2","equcab3","tair10"))
 }
@@ -2227,6 +2231,13 @@ cmclapply <- function(...,rc) {
                 "chr7","chr8","chr9","chrX","chrY"
             ))
         },
+        mm39 = {
+            return(c(
+                "chr1","chr10","chr11","chr12","chr13","chr14","chr15","chr16",
+                "chr17","chr18","chr19","chr2","chr3","chr4","chr5","chr6",
+                "chr7","chr8","chr9","chrX","chrY"
+            ))
+        },
         rn5 = {
             return(c(
                 "chr1","chr10","chr11","chr12","chr13","chr14","chr15","chr16",
@@ -2334,8 +2345,8 @@ cmclapply <- function(...,rc) {
 }
 
 .getValidChrsWithMit <- function(org) {
-    if (org %in% c("hg18","hg19","hg38","mm9","mm10","rn5","rn6","pantro4",
-        "pantro5","pantro6","susscr3","susscr11","equcab2","equcab3"))
+    if (org %in% c("hg18","hg19","hg38","mm9","mm10","mm39","rn5","rn6",
+        "pantro4","pantro5","pantro6","susscr3","susscr11","equcab2","equcab3"))
         return(c(.getValidChrs(org),"chrM"))
     else
         return(.getValidChrs(org))

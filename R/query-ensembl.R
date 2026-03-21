@@ -375,23 +375,24 @@
     return(list(
         hg18=54,
         hg19=75,
-        hg38=95:111,
+        hg38=100:115,
         mm9=54,
-        mm10=95:111,
+        mm10=102,
+        mm39=103:115,
         rn5=77,
-        rn6=c(80,95:111),
-        dm3=c(75,77),
-        dm6=c(80,95:111),
-        danrer7=c(75,77),
+        rn6=100:115,
+        dm3=77,
+        dm6=100:115,
+        danrer7=77,
         danrer10=80,
-        danrer11=95:111,
-        pantro4=c(75,77,80),
-        pantro5=95:111,
+        danrer11=100:115,
+        pantro4=c(77,80),
+        pantro5=100:115,
         #pantro6=,
-        susscr3=c(75,77,80),
-        susscr11=95:111,
-        equcab2=c(75,77),
-        equcab3=95:111
+        susscr3=c(77,80),
+        susscr11=100:115,
+        equcab2=77,
+        equcab3=100:115
     ))
 }
 
@@ -452,6 +453,7 @@
         hg38 = { return("hsapiens_gene_ensembl") },
         mm9 = { return("mmusculus_gene_ensembl") },
         mm10 = { return("mmusculus_gene_ensembl") },
+        mm39 = { return("mmusculus_gene_ensembl") },
         rn5 = { return("rnorvegicus_gene_ensembl") },
         rn6 = { return("rnorvegicus_gene_ensembl") },
         dm3 = { return("dmelanogaster_gene_ensembl") },
@@ -511,7 +513,7 @@
 }
 
 .orgsWithVersionAfter90 <- function() {
-    return(c("hg38","mm10","rn6","pantro5","susscr11"))
+    return(c("hg38","mm10","mm39","rn6","pantro5","susscr11"))
 }
 
 .orgsWithVersion <- function() {
@@ -576,6 +578,20 @@
                 "IG_C_gene","IG_J_gene","IG_D_gene","IG_LV_gene","IG_V_gene",
                 "IG_V_pseudogene","TR_V_gene","TR_V_pseudogene",
                 "3prime_overlapping_ncrna"))
+        },
+        mm39 = {
+            return(c("IG_C_gene","IG_C_pseudogene","IG_D_gene",
+                "IG_D_pseudogene","IG_J_gene","IG_LV_gene","IG_pseudogene",
+                "IG_V_gene","IG_V_pseudogene","lncRNA","miRNA","misc_RNA",
+                "Mt_rRNA","Mt_tRNA","processed_pseudogene","protein_coding",
+                "pseudogene","ribozyme","rRNA","scaRNA","scRNA","snoRNA",
+                "snRNA","sRNA","TEC","transcribed_processed_pseudogene",
+                "transcribed_unitary_pseudogene",
+                "transcribed_unprocessed_pseudogene",   
+                "translated_unprocessed_pseudogene",
+                "TR_C_gene","TR_D_gene","TR_J_gene","TR_J_pseudogene",
+                "TR_V_gene","TR_V_pseudogene","unitary_pseudogene",
+                "unprocessed_pseudogene"))
         },
         dm3 = {
             return(c("protein_coding","ncRNA","snoRNA","pre_miRNA","pseudogene",
