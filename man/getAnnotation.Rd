@@ -108,7 +108,7 @@
     mitochondrial chromosomes.
 }
 \examples{
-mm10Genes <- getAnnotation("mm10","gene")
+#mm10Genes <- getAnnotation("mm10","gene")
 }
 \author{
     Panagiotis Moulos
