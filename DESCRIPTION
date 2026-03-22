@@ -12,7 +12,7 @@ Imports:
     BiocGenerics,
     biomaRt,
     Biostrings,
-    GenomeInfoDb,
+    Seqinfo,
     GenomicFeatures,
     GenomicRanges,
     IRanges,
@@ -26,6 +26,7 @@ Imports:
     txdbmaker,
     utils
 Suggests:
+    GenomeInfoDb,
     BiocStyle,
     BSgenome,
     knitr,
@@ -52,8 +53,8 @@ biocViews: Software, WorkflowStep, RNASeq, Transcription, Sequencing,
     SystemsBiology, AlternativeSplicing, DataImport, ChIPSeq
 VignetteBuilder: knitr
 BugReports: https://github.com/pmoulos/sitadela/issues
-Version: 1.13.0
-Date: 2024-03-13
+Version: 1.19.0
+Date: 2025-07-22
 Collate:
     'argcheck.R'
     'fromtxdb.R'

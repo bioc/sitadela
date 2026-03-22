@@ -22,9 +22,9 @@
     This function retrieves sequence (chromosome) length
     and other information for a set of reference sequences
     for a sitadela supported organism. If the organism is
-    supported by the \code{\link{getChromInfoFromUCSC}} of
-    the GenomeInfoDb package, then this function is used,
-    otherwise, a directo download from the UCSC golden
+    supported by the \code{\link[GenomeInfoDb]{getChromInfoFromUCSC}}
+    function of the \pkg{GenomeInfoDb} package, then this function
+    is used, otherwise, a directo download from the UCSC golden
     path takes place to retrieve the required data.
 }
 \examples{
