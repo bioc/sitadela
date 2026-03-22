@@ -121,7 +121,7 @@
 # Build a test database with one genome
 myDb <- file.path(tempdir(),"testann.sqlite")
 
-organisms <- list(mm10=100)
+organisms <- list(mm39=115)
 sources <- "ensembl"
 
 # If the example is not running in a multicore system, rc is ignored

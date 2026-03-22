@@ -34,6 +34,9 @@ getUcscTableNameUtr <- function(org,refdb) {
                 mm10 = {
                     return("knownGene")
                 },
+                mm39 = {
+                    return("knownGene")
+                },
                 rn5 = {
                     return("mgcGenes")
                 },
@@ -123,6 +126,9 @@ getUcscTableNameUtr <- function(org,refdb) {
                     return("refGene")
                 },
                 mm10 = {
+                    return("ncbiRefSeq")
+                },
+                mm39 = {
                     return("ncbiRefSeq")
                 },
                 rn5 = {

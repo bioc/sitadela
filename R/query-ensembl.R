@@ -375,24 +375,24 @@
     return(list(
         hg18=54,
         hg19=75,
-        hg38=100:115,
+        hg38=110:115,
         mm9=54,
         mm10=102,
-        mm39=103:115,
+        mm39=110:115,
         rn5=77,
-        rn6=100:115,
+        rn6=110:115,
         dm3=77,
-        dm6=100:115,
+        dm6=110:115,
         danrer7=77,
         danrer10=80,
-        danrer11=100:115,
-        pantro4=c(77,80),
-        pantro5=100:115,
+        danrer11=110:115,
+        pantro4=80,
+        pantro5=110:115,
         #pantro6=,
-        susscr3=c(77,80),
-        susscr11=100:115,
+        susscr3=80,
+        susscr11=110:115,
         equcab2=77,
-        equcab3=100:115
+        equcab3=110:115
     ))
 }
 
@@ -408,6 +408,8 @@
         
     if (org == "tair10")
         return("plants.ensembl.org")
+    if (org == "hg19")
+        return("grch37.ensembl.org")
     
     aver <- .getUcscToEnsembl(org)
     if (!is.null(ver) && !(ver %in% aver)) {
