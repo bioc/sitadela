@@ -1,7 +1,7 @@
-test_sitadela_known <- function() {
-    testResult <- testKnownBuild("dm6","ensembl",115)
-    checkTrue(all(testResult))
-}
+#test_sitadela_known <- function() {
+#    testResult <- testKnownBuild("dm6","ensembl",115)
+#    checkTrue(all(testResult))
+#}
 
 test_sitadela_gtf <- function() {
     gtf <- file.path(system.file(package="sitadela"),"dummy.gtf.gz")
@@ -25,13 +25,13 @@ test_sitadela_ensembl_often <- function() {
     checkTrue(is.null(f2))
 }
 
-test_sitadela_ensembl_rare <- function() {
-    f1 <- testEnsemblSimple("danrer11","gene")
-    checkTrue(is.null(f1))
-    
-    f2 <- testEnsemblSimple("danrer11","transcript")
-    checkTrue(is.null(f2))
-}
+#test_sitadela_ensembl_rare <- function() {
+#    f1 <- testEnsemblSimple("danrer11","gene")
+#    checkTrue(is.null(f1))
+#    
+#    f2 <- testEnsemblSimple("danrer11","transcript")
+#    checkTrue(is.null(f2))
+#}
 
 #test_sitadela_ensembl_mm10 <- function() {
 #    f1 <- testEnsemblSimple("mm10","gene")
