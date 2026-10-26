@@ -16,7 +16,7 @@
     The function returns a \code{Seqinfo} or a
     \code{data.frame} with the a subset of a 
     \code{Seqinfo} information. See also 
-    \code{\link{Seqinfo}}.
+    \code{Seqinfo}.
 }
 \description{
     This function retrieves sequence (chromosome) length
