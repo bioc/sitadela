@@ -24,8 +24,10 @@
     
     gr$gc_content <- rep(50,length(gr))
     ann <- as.data.frame(gr)
-    ann <- ann[,c(1,2,3,6,9,5,7,8)]
+    #ann <- ann[,c(1,2,3,6,9,5,7,8)]
     names(ann)[1] <- "chromosome"
+    ann <- ann[,c("chromosome","start","end","gene_id","gc_content","strand",
+        "gene_name","biotype")]
     ann$chromosome <- as.character(ann$chromosome)
     ann <- ann[order(ann$chromosome,ann$start),]
     
@@ -77,15 +79,24 @@
     names(activeLength) <- unique(sexon$gene_id)
     attr(sexon,"activeLength") <- activeLength
     
+    eann <- as.data.frame(sexon)
+    names(eann)[1] <- "chromosome"
+    eann <- eann[,c("chromosome","start","end","exon_id","gene_id","strand",
+        "gene_name","biotype")]
+    
     if (asdf) {
-        eann <- as.data.frame(sexon)
-        eann <- eann[,c(1,2,3,6,7,5,8,9)]
-        names(eann)[c(1,4)] <- c("chromosome","exon_id")
+        #eann <- as.data.frame(sexon)
+        #eann <- eann[,c(1,2,3,6,7,5,8,9)]
+        #names(eann)[c(1,4)] <- c("chromosome","exon_id")
         attr(eann,"activeLength") <- activeLength
         return(eann)
     }
-    else
-        return(sexon)
+    else {
+        #return(sexon)
+        eann <- GRanges(eann)
+        attr(eann,"activeLength") <- activeLength
+        return(eann)
+    }
 }
 
 # ann <- .makeGeneUtrFromTxDb(txdb,map,FALSE)
@@ -139,20 +150,29 @@
     activeLength <- annList$length
     names(activeLength) <- unique(as.character(s3utr$gene_id))
     
+    sann <- as.data.frame(s3utr)
+    names(sann)[1] <- "chromosome"
+    sann <- sann[,c("chromosome","start","end","gene_id","gene_name",
+        "strand","transcript_id","biotype")]
+
     if (asdf) {
-        sann <- as.data.frame(s3utr)
-        sann <- sann[,c(1,2,3,6,8,5,7,9)]
-        #if (useMap)
-        #    names(sann)[c(1,4)] <- c("chromosome","gene_id")
-        #else {
-        #    sann <- sann[,c(1,2,3,7,5,6,4,8)]
-            names(sann)[c(1,4,7)] <- c("chromosome","gene_id","transcript_id")
-        #}
+        #sann <- as.data.frame(s3utr)
+        #sann <- sann[,c(1,2,3,6,8,5,7,9)]
+        ##if (useMap)
+        ##    names(sann)[c(1,4)] <- c("chromosome","gene_id")
+        ##else {
+        ##    sann <- sann[,c(1,2,3,7,5,6,4,8)]
+        #    names(sann)[c(1,4,7)] <- c("chromosome","gene_id","transcript_id")
+        ##}
         attr(sann,"activeLength") <- activeLength
         return(sann)
     }
-    else
-        return(s3utr)
+    else {
+        #return(s3utr)
+        sann <- GRanges(sann)
+        attr(sann,"activeLength") <- activeLength
+        return(sann)
+    }
 }
 
 # ann <- .makeTranscriptGeneFromTxDb(txdb,map,FALSE)
@@ -189,15 +209,24 @@
     activeLength <- annList$length
     names(activeLength) <- unique(stranscript$gene_id)
     
+    sann <- as.data.frame(stranscript)
+    names(sann)[1] <- "chromosome"
+    sann <- sann[,c("chromosome","start","end","transcript_id","gene_name",
+        "strand","gene_id","biotype")]
+
     if (asdf) {
-        sann <- as.data.frame(stranscript)
-        sann <- sann[,c(1,2,3,6,8,5,7,9)]
-        names(sann)[c(1,4)] <- c("chromosome","transcript_id")
+        #sann <- as.data.frame(stranscript)
+        #sann <- sann[,c(1,2,3,6,8,5,7,9)]
+        #names(sann)[c(1,4)] <- c("chromosome","transcript_id")
         attr(sann,"activeLength") <- activeLength
         return(sann)
     }
-    else
-        return(stranscript)
+    else {
+        #return(stranscript)
+        sann <- GRanges(sann)
+        attr(sann,"activeLength") <- activeLength
+        return(sann)
+    }
 }
 
 # ann <- .makeTranscriptExonFromTxDb(txdb,map,FALSE)
@@ -334,15 +363,24 @@
     activeLength <- annList$length
     names(activeLength) <- unique(strexon$transcript_id)
     
+    sann <- as.data.frame(strexon)
+    names(sann)[1] <- "chromosome"
+    sann <- sann[,c("chromosome","start","end","exon_id","transcript_id",
+        "strand","gene_name","biotype")]
+    
     if (asdf) {
-        sann <- as.data.frame(strexon)
-        sann <- sann[,c(1,2,3,6,7,5,8,9)]
-        names(sann)[c(1,4)] <- c("chromosome","exon_id")
+        #sann <- as.data.frame(strexon)
+        #sann <- sann[,c(1,2,3,6,7,5,8,9)]
+        #names(sann)[c(1,4)] <- c("chromosome","exon_id")
         attr(sann,"activeLength") <- activeLength
         return(sann)
     }
-    else
-        return(strexon)   
+    else {
+        #return(strexon)
+        sann <- GRanges(sann)
+        attr(sann,"activeLength") <- activeLength
+        return(sann)
+    }
 }
 
 # ann <- .makeTranscriptUtrFromTxDb(txdb,map,FALSE)
@@ -397,15 +435,24 @@
     # Remember, gene_id in UTR's per transcript is the transcript
     names(activeLength) <- unique(as.character(s3utrTranscript$gene_id))
     
+    sann <- as.data.frame(s3utrTranscript)
+    names(sann)[1] <- "chromosome"
+    sann <- sann[,c("chromosome","start","end","transcript_id","gene_name",
+        "strand","gene_id","biotype")]
+    
     if (asdf) {
-        sann <- as.data.frame(s3utrTranscript)
-        sann <- sann[,c(1,2,3,6,8,5,7,9)]
-        names(sann)[c(1,4)] <- c("chromosome","transcript_id")
+        #sann <- as.data.frame(s3utrTranscript)
+        #sann <- sann[,c(1,2,3,6,8,5,7,9)]
+        #names(sann)[c(1,4)] <- c("chromosome","transcript_id")
         attr(sann,"activeLength") <- activeLength
         return(sann)
     }
-    else
-        return(s3utrTranscript)
+    else {
+        #return(s3utrTranscript)
+        sann <- GRanges(sann)
+        attr(sann,"activeLength") <- activeLength
+        return(sann)
+    }
 }
 
 # ann <- .makeExonExonFromTxDb(txdb,map,FALSE)
